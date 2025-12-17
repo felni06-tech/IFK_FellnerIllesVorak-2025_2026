@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Időpontfoglaló</title>
+</head>
+
+<body>
+
+    <header> <!-- navigation bar -->
+        <nav>
+            <div class="nav-container">
+                <h1>Időpontfoglaló</h1>
+                <div id="nav-links">
+                    <a href="#" id="login-link">Bejelentkezés</a> <!-- Login Gomb-->
+                    <a href="#" id="switch-to-register">Regisztráció</a> <!-- Register Gomb-->
+                </div>
+            </div>
+        </nav>
+    </header>
+
+
+
+    <main>
+        <section id="hero-section" class="hero">
+            <div class="hero-content">
+                <h2>Üdvözlünk az Időpontfoglalónál!</h2>
+                <p>Foglaljon időpontot kedvenc szolgáltatóival egyszerűen és hatékonyan.</p>
+                <div class="hero-buttons">
+                    <a href="#" id="get-started-btn" class="btn btn-large">Kezdje el</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="auth-section" class="hidden">
+            <div class="auth-container">
+                <div id="login-form" class="auth-form">
+                    <h2>Bejelentkezés</h2> 
+                    <form id="login"><!-- Login Form -->
+                        <input type="email" name="email" placeholder="Email" required>
+                        <input type="password" name="password" placeholder="Jelszó" required>
+                        <select name="role">
+                            <option value="user">Felhasználó</option>
+                            <option value="provider">Szolgáltató</option>
+                        </select>
+                        <button type="submit">Bejelentkezés</button>
+                    </form>
+                    <p>Nincs még fiókod? <a href="#" id="switch-to-register">Regisztráció</a></p>
+                </div>
+
+                <div id="register-form" class="auth-form hidden">
+                    <h2>Regisztráció</h2>
+                    <form id="register"> <!-- Register Form -->
+                        <input type="text" name="name" placeholder="Név" required>
+                        <input type="email" name="email" placeholder="Email" required>
+                        <input type="password" name="password" placeholder="Jelszó" required>
+                        <select name="role">
+                            <option value="user">Felhasználó</option>
+                            <option value="provider">Szolgáltató</option>
+                        </select>
+                        <button type="submit">Regisztráció</button>
+                    </form>
+                    <p>Van már fiókod? <a href="#" id="switch-to-login">Bejelentkezés</a></p>
+                </div>
+            </div>
+        </section>
+
+        <section id="user-dashboard" class="hidden">
+            <h2>Üdvözlünk, <span id="user-name"></span></h2>
+            <div class="dashboard-nav">
+                <button id="browse-services-btn">Szolgáltatások böngészése</button>
+                <button id="my-appointments-btn">Saját időpontjaim</button>
+                <button id="logout-btn">Kijelentkezés</button>
+            </div>
+            <div id="user-content"></div>
+        </section>
+
+        <section id="provider-dashboard" class="hidden">
+            <h2>Üdvözlünk, <span id="provider-name"></span></h2>
+            <div class="dashboard-nav">
+                <button id="manage-profile-btn">Profil kezelése</button>
+                <button id="manage-services-btn">Szolgáltatások kezelése</button>
+                <button id="manage-appointments-btn">Időpontok kezelése</button>
+                <button id="logout-btn">Kijelentkezés</button>
+            </div>
+            <div id="provider-content"></div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
