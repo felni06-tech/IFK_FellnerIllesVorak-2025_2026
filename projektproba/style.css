@@ -5,6 +5,10 @@
   padding: 0;
   box-sizing: border-box;
 }
+a{
+  text-decoration: none;
+  color: white;
+}
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -521,4 +525,5 @@ main {
   color: #ffd700;
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
+
 }
