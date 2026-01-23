@@ -60,3 +60,46 @@ export const register = async (req, res) => {
 
 }
 
+// --- Bejelentkezés ---
+export const login = async (req, res) => {
+    const { email, password } = req.body
+
+    try {
+        // Felhasználó keresés
+        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email])
+        if(users.length === 0) {
+            return res.status(401).json({ message: "Hibás email vagy jelszó!" })
+        }
+
+        const user = users[0]
+
+        //Jelszó ellenőrzés
+        const isMatch = await bcrypt.compare(password, user.password_hash)
+        if(!isMatch) {
+            return res.status(401).json({ message: "Hibás email vagy jelszó!" })
+        }
+
+        //Token generálás
+        const token = jwt.sign(
+            { user_id: user.user_id, profile_type: user.profile_type },
+            process.env.JWT_SECRET || 'ifk_super_secret_key',
+            { expiresIn: '1d' }
+        )
+
+        //Válasz küldése
+        res.status(200).json({
+            message: "Sikeres bejelentkezés!",
+            token,
+            user: {
+                user_id: user.user_id,
+                name: user.name,
+                profile_type: user.profile_type,
+                approved: user.approved
+            }
+        })
+
+    } catch (error) {
+        console.error("Auth Login Error:", error)
+        res.status(500).json({ message: "Hiba történt a bejelentkezés során." })
+    }
+}
