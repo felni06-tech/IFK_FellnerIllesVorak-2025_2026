@@ -7,14 +7,17 @@ export const register = async (req, res) => {
     try {
         const { name, email, password, phone, profile_type, profile_picture, profession } = req.body;
 
+        //Hiányzó adatok kezelése
         if (!name || !email || !password || !phone || !profile_type) {
             return res.status(400).json({ message: "Minden mező kitöltése kötelező!" })
         }
 
+        //Szolgáltatóknál kötelező a szakma is
         if (profile_type === 'provider' && !profession) {
             return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
         }
 
+        //Nem árt ha nincs két ugyanolyan felhasználó
         const existingUser = await UserModel.findByEmail(email)
 
         if (existingUser) {
@@ -41,12 +44,14 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body
 
+        //Hiányzó adatok kezelése
         if (!email || !password) {
             return res.status(400).json({ message: "E-mail és jelszó szükséges!" })
         }
 
         const user = await UserModel.findByEmail(email)
 
+        //Hibás adatok kezelése
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
             return res.status(401).json({ message: "Hibás e-mail vagy jelszó!" })
         }
