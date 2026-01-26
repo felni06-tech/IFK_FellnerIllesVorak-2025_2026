@@ -16,7 +16,7 @@ const ProviderModel = {
         return result
     },
 
-    //Lekérjük az összes adatot 'user_id' alapján
+    //Lekérdezzük a profil összes adatát 'user_id' alapján
     getProfileByUserId: async (userId) => {
         const [rows] = await db.execute(
             `SELECT u.name, u.email, u.phone, u.profile_picture, provider.*
