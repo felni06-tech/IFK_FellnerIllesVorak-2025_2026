@@ -7,8 +7,12 @@ export const register = async (req, res) => {
     try {
         const { name, email, password, phone, profile_type, profile_picture, profession } = req.body;
 
-        if (!name || !email || !password_hash || !phone || !profile_type) {
+        if (!name || !email || !password || !phone || !profile_type) {
             return res.status(400).json({ message: "Minden mező kitöltése kötelező!" })
+        }
+
+        if (profile_type === 'provider' && !profession) {
+            return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
         }
 
         const existingUser = await UserModel.findByEmail(email)
@@ -19,12 +23,12 @@ export const register = async (req, res) => {
 
         const password_hash = await bcrypt.hash(password, 10)
 
-        const userId = await UserModel.create({
+        const userData = await UserModel.create({
             ...req.body,
             password_hash
         })
 
-        res.status(201).json({ message: "Sikeres regisztráció!", userId })
+        res.status(201).json({ message: "Sikeres regisztráció!", userData })
     }
     catch (error) {
         console.error(error)
@@ -36,10 +40,20 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "E-mail és jelszó szükséges!" })
+        }
+
         const user = await UserModel.findByEmail(email)
 
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
             return res.status(401).json({ message: "Hibás e-mail vagy jelszó!" })
+        }
+
+        //Csak jóváhagyott ember tudjon belépni
+        if (user.approved === 0) {
+            return res.status(403).json({ message: "Fiókod jóváhagyásra vár." })
         }
 
         const token = jwt.sign(
