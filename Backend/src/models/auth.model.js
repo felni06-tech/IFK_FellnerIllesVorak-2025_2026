@@ -1,11 +1,13 @@
 import { db } from '../config/db'
 
 const User = {
+    //Felhasználó keresése e-mail alapján
     findByEmail: async (email) => {
         const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [email])
         return rows[0]
     },
 
+    //Új felhasználó létrehozása
     create: async (userData) => {
         const { name, email, phone, password_hash, profile_type, profile_picture, profession } = userData
 
@@ -21,6 +23,7 @@ const User = {
 
             const userId = result.insertId
 
+            //Ha szolgáltató profil akkor oda is hozzá kell adnunk
             if (profile_type === 'provider') {
                 await connection.execute(
                     `INSERT INTO providers (user_id, profession, avg_rating)
@@ -40,3 +43,5 @@ const User = {
         }
     } 
 }
+
+export default User
