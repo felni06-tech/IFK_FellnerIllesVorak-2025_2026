@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { UserModel } from '../models/auth.model'
+import { UserModel } from '../models/user.model'
 
 // --- Regisztráció ---
 export const register = async (req, res) => {
