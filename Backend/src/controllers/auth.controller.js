@@ -1,20 +1,20 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { UserModel } from '../models/user.model'
-import { ServiceModel } from '../models/service.model';
+import { UserModel } from '../models/user.model.js'
+import { ServiceModel } from '../models/service.model.js';
 
 // --- Regisztráció ---
 export const register = async (req, res) => {
     try {
-        const { name, email, password, phone, profile_type, profile_picture, service_id } = req.body;
+        const { isProvider, name, email, password, phone, profile_picture, service_id } = req.body;
 
         //Hiányzó adatok kezelése
-        if (!name || !email || !password || !phone || !profile_type) {
+        if (!name || !email || !password || !phone) {
             return res.status(400).json({ message: "Minden mező kitöltése kötelező!" })
         }
 
         //Szolgáltatóknál kötelező a szakma is
-        if (profile_type === 'provider') {
+        if (isProvider) {
             if (!service_id) {
                 return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
             }
@@ -24,7 +24,7 @@ export const register = async (req, res) => {
                 return res.status(400).json({ message: "Érvénytelen szakma!" })
             }
 
-            req.body.profession = service.service_name
+            req.body.profession = service.name
         }
 
         //Nem árt ha nincs két ugyanolyan felhasználó
@@ -36,12 +36,12 @@ export const register = async (req, res) => {
 
         const password_hash = await bcrypt.hash(password, 10)
 
-        const userData = await UserModel.create({
+        const userId = await UserModel.create({
             ...req.body,
             password_hash
         })
 
-        res.status(201).json({ message: "Sikeres regisztráció!", userData })
+        res.status(201).json({ message: "Sikeres regisztráció!", userId })
     }
     catch (error) {
         console.error(error)
@@ -72,14 +72,14 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign(
-           { user_id: user.user_id, profile_type: user.profile_type },
+           { id: user.id },
            process.env.JWT_SECRET,
            { expiresIn: '24h' } 
         )
 
         res.json({
             token,
-            user: { id: user.user_id, name: user.name, profile_type: user.profile_type}
+            user: { id: user.id, name: user.name }
         })
     }
     catch (error) {
