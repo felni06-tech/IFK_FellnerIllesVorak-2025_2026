@@ -1,6 +1,6 @@
 import { db } from '../config/db'
 
-const ProviderModel = {
+export const ProviderModel = {
     //Profil frissítése
     updateProfile: async (userId, data) => {
         const { address, profession, description } = data
@@ -29,5 +29,3 @@ const ProviderModel = {
         return rows[0]
     }
 }
-
-export default ProviderModel

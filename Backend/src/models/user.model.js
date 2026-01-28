@@ -1,6 +1,6 @@
 import { db } from '../config/db'
 
-const UserModel = {
+export const UserModel = {
     //Felhasználó keresése e-mail alapján
     findByEmail: async (email) => {
         const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [email])
@@ -44,5 +44,3 @@ const UserModel = {
         }
     } 
 }
-
-export default UserModel

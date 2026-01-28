@@ -1,11 +1,12 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { UserModel } from '../models/user.model'
+import { ServiceModel } from '../models/service.model';
 
 // --- Regisztráció ---
 export const register = async (req, res) => {
     try {
-        const { name, email, password, phone, profile_type, profile_picture, profession } = req.body;
+        const { name, email, password, phone, profile_type, profile_picture, service_id } = req.body;
 
         //Hiányzó adatok kezelése
         if (!name || !email || !password || !phone || !profile_type) {
@@ -13,8 +14,17 @@ export const register = async (req, res) => {
         }
 
         //Szolgáltatóknál kötelező a szakma is
-        if (profile_type === 'provider' && !profession) {
-            return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
+        if (profile_type === 'provider') {
+            if (!service_id) {
+                return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
+            }
+
+            const service = await ServiceModel.findById(service_id)
+            if (!service) {
+                return res.status(400).json({ message: "Érvénytelen szakma!" })
+            }
+
+            req.body.profession = service.service_name
         }
 
         //Nem árt ha nincs két ugyanolyan felhasználó
