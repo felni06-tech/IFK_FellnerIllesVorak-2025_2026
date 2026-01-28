@@ -1,105 +1,79 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { db } from '../config/db'
+import { UserModel } from '../models/user.model'
 
 // --- Regisztráció ---
 export const register = async (req, res) => {
-    const { name, email, password, phone, profile_type, profile_picture, profession } = req.body;
-
-    // Alap ellenőrzés
-    if (!name || !email || !password || !phone || !profile_type) {
-            return res.status(400).json({ message: "Minden mező kitöltése kötelező!" });
-    }
-
     try {
-        // Van-e ilyen regisztráció?
-        const [existing] = await db.execute('SELECT user_id FROM users WHERE email = ?', [email])
-        if(existing.length > 0) {
-            return res.status(400).json({message: "Ez az email cím már foglalt."})
+        const { name, email, password, phone, profile_type, profile_picture, profession } = req.body;
+
+        //Hiányzó adatok kezelése
+        if (!name || !email || !password || !phone || !profile_type) {
+            return res.status(400).json({ message: "Minden mező kitöltése kötelező!" })
         }
 
-        // Jelszó titkosítás
-        const salt = await bcrypt.genSalt(10)
-        const passwordHash = await bcrypt.hash(password, salt)
-
-        // Mentés az adatbázisba
-        const connection = await db.getConnection()
-        await connection.beginTransaction()
-
-        try {
-            const [userResult] = await connection.execute(
-                `INSERT INTO users (profile_type, profile_picture, name, email, phone, password_hash, approved) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                 [profile_type, profile_picture || null, name, email, phone, passwordHash, 0]
-            )
-
-            const newUser_id = userResult.insertId
-
-            //Ha szolgáltató akkor kell neki egy rekord a providers táblában is
-            if(profile_type === 'provider') {
-                await connection.execute(
-                    `INSERT INTO providers (user_id, profession, avg_rating)
-                    VALUES (?, ?, ?)`,
-                    [newUser_id, profession, 0.0]
-                )
-            }
-
-            await connection.commit()
-            res.status(201).json({ message: "Sikeres regisztráció!", userid: newUser_id })
-
-        } catch (err) {
-            await connection.rollback()
-            throw err
-        } finally {
-            connection.release()
+        //Szolgáltatóknál kötelező a szakma is
+        if (profile_type === 'provider' && !profession) {
+            return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
         }
 
-    } catch (error) {
+        //Nem árt ha nincs két ugyanolyan felhasználó
+        const existingUser = await UserModel.findByEmail(email)
 
+        if (existingUser) {
+            return res.status(400).json({ message: "Ez az e-mail már foglalt." })
+        }
+
+        const password_hash = await bcrypt.hash(password, 10)
+
+        const userData = await UserModel.create({
+            ...req.body,
+            password_hash
+        })
+
+        res.status(201).json({ message: "Sikeres regisztráció!", userData })
     }
-
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Hiba a regisztráció során." })
+    }
 }
 
 // --- Bejelentkezés ---
 export const login = async (req, res) => {
-    const { email, password } = req.body
-
     try {
-        // Felhasználó keresés
-        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email])
-        if(users.length === 0) {
-            return res.status(401).json({ message: "Hibás email vagy jelszó!" })
+        const { email, password } = req.body
+
+        //Hiányzó adatok kezelése
+        if (!email || !password) {
+            return res.status(400).json({ message: "E-mail és jelszó szükséges!" })
         }
 
-        const user = users[0]
+        const user = await UserModel.findByEmail(email)
 
-        //Jelszó ellenőrzés
-        const isMatch = await bcrypt.compare(password, user.password_hash)
-        if(!isMatch) {
-            return res.status(401).json({ message: "Hibás email vagy jelszó!" })
+        //Hibás adatok kezelése
+        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({ message: "Hibás e-mail vagy jelszó!" })
         }
 
-        //Token generálás
+        //Csak jóváhagyott ember tudjon belépni
+        if (user.approved === 0) {
+            return res.status(403).json({ message: "Fiókod jóváhagyásra vár." })
+        }
+
         const token = jwt.sign(
-            { user_id: user.user_id, profile_type: user.profile_type },
-            process.env.JWT_SECRET || 'ifk_super_secret_key',
-            { expiresIn: '1d' }
+           { user_id: user.user_id, profile_type: user.profile_type },
+           process.env.JWT_SECRET,
+           { expiresIn: '24h' } 
         )
 
-        //Válasz küldése
-        res.status(200).json({
-            message: "Sikeres bejelentkezés!",
+        res.json({
             token,
-            user: {
-                user_id: user.user_id,
-                name: user.name,
-                profile_type: user.profile_type,
-                approved: user.approved
-            }
+            user: { id: user.user_id, name: user.name, profile_type: user.profile_type}
         })
-
-    } catch (error) {
-        console.error("Auth Login Error:", error)
-        res.status(500).json({ message: "Hiba történt a bejelentkezés során." })
+    }
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Hiba történt a bejelentkezés során!" })
     }
 }
