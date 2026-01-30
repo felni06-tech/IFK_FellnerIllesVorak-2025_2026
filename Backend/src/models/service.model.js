@@ -13,7 +13,7 @@ export const ServiceModel = {
         const [rows] = await db.execute(
             `SELECT * FROM services
             WHERE id = ?`,
-            serviceId
+            [serviceId]
         )
         
         return rows[0]

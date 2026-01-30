@@ -15,11 +15,8 @@ export const register = async (req, res) => {
 
         //Szolgáltatóknál kötelező a szakma is
         if (isProvider) {
-            if (!service_id) {
-                return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
-            }
-
             const service = await ServiceModel.findById(service_id)
+
             if (!service) {
                 return res.status(400).json({ message: "Érvénytelen szakma!" })
             }
