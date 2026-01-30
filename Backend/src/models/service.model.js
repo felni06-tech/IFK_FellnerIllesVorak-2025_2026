@@ -12,7 +12,7 @@ export const ServiceModel = {
     findById: async (serviceId) => {
         const [rows] = await db.execute(
             `SELECT * FROM services
-            WHERE service_id = ?`,
+            WHERE id = ?`,
             serviceId
         )
         

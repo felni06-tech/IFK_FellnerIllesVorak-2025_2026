@@ -3,7 +3,7 @@ import { ProviderModel } from '../models/provider.model'
 export const updateMyProfile = async (req, res) => {
     try {
         //A middleware fogja beletenni a requestbe a usert
-        const userId = req.user.user_id
+        const providerId = req.user.providerId
         const { address, profession, description } = req.body
 
         if (!address || !profession) {
@@ -23,8 +23,8 @@ export const updateMyProfile = async (req, res) => {
 export const getMyProfile = async (req, res) => {
     try {
         //A middleware fogja beletenni a requestbe a usert
-        const userId = req.user.user_id
-        const profile = await ProviderModel.getProfileByUserId(userId)
+        const providerId = req.user.provider_id
+        const profile = await ProviderModel.getProfileByProviderId(userId)
 
         if(!profile) {
             return res.status(404).json({ message: "Profil nem található" })
