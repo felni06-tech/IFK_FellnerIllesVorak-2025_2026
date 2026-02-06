@@ -33,7 +33,7 @@ export const UserModel = {
             const [result] = await connection.execute(
                 `INSERT INTO users ( provider_id, name, email, phone, password_hash, profile_picture)
                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [provider_id, name, email, phone, password_hash, profile_picture]
+                [providerId, name, email, phone, password_hash, profile_picture || null]
             )
 
             const userId = result.insertId
