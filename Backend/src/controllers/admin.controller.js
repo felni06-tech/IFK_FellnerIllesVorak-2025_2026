@@ -81,7 +81,7 @@ export const createNewAdmin = async (req, res) => {
             return res.status(400).json({ message: "Ez az admin email már foglalt!" })
         }
 
-        const password_hash = bcrypt.hash(password, 10)
+        const password_hash = await bcrypt.hash(password, 10)
 
         await db.execute(
             `INSERT INTO admins (name, email, phone, password_hash)
