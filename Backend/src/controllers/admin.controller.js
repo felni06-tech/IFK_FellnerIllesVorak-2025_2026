@@ -75,6 +75,10 @@ export const createNewAdmin = async (req, res) => {
     try {
         const { name, email, phone, password } = req.body
 
+        if (!name || !email || !phone || !password) {
+            return res.status(400).json({ message: "A név, email, telefonszám és jelszó mezők kitöltése kötelező." })
+        }
+
         const existingAdmin = await AdminModel.findByEmail(email)
 
         if (existingAdmin) {
@@ -89,10 +93,38 @@ export const createNewAdmin = async (req, res) => {
             [name, email, phone, password_hash]
         )
 
-        res.status(200).json({ message: "Új admin létrehozása sikeres." })
+        res.status(200).json({
+            message: "Új admin létrehozása sikeres.",
+            adminId: result.insertId
+        })
     }
     catch (error) {
         console.error(error)
         res.status(500).json({ message: "Szerver hiba az admin létrehozásakor." })
+    }
+}
+
+export const createNewService = async (req, res) => {
+    try {
+        const { name, price, duration_minutes, description } = req.body
+
+        if (!name || !price || !duration_minutes) {
+            return res.status(400).json({ message: "A név, ár és időtartam mezők kitöltése kötelező." })
+        }
+
+        const [result] = await db.execute(
+            `INSERT INTO services (name, price, duration_minutes, description)
+            VALUES (?, ?, ?, ?)`,
+            [name, price, duration_minutes, description || null]
+        )
+
+        res.status(201).json({
+            message: "Új szolgáltatás létrehozása sikeres.",
+            serviceId: result.insertId
+        })
+    }
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Szerver hiba a szolgáltatás létrehozásakor." })
     }
 }
