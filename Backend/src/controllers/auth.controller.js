@@ -1,0 +1,79 @@
+import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+import { UserModel } from '../models/user.model'
+
+// --- Regisztráció ---
+export const register = async (req, res) => {
+    try {
+        const { name, email, password, phone, profile_type, profile_picture, profession } = req.body;
+
+        //Hiányzó adatok kezelése
+        if (!name || !email || !password || !phone || !profile_type) {
+            return res.status(400).json({ message: "Minden mező kitöltése kötelező!" })
+        }
+
+        //Szolgáltatóknál kötelező a szakma is
+        if (profile_type === 'provider' && !profession) {
+            return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
+        }
+
+        //Nem árt ha nincs két ugyanolyan felhasználó
+        const existingUser = await UserModel.findByEmail(email)
+
+        if (existingUser) {
+            return res.status(400).json({ message: "Ez az e-mail már foglalt." })
+        }
+
+        const password_hash = await bcrypt.hash(password, 10)
+
+        const userData = await UserModel.create({
+            ...req.body,
+            password_hash
+        })
+
+        res.status(201).json({ message: "Sikeres regisztráció!", userData })
+    }
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Hiba a regisztráció során." })
+    }
+}
+
+// --- Bejelentkezés ---
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body
+
+        //Hiányzó adatok kezelése
+        if (!email || !password) {
+            return res.status(400).json({ message: "E-mail és jelszó szükséges!" })
+        }
+
+        const user = await UserModel.findByEmail(email)
+
+        //Hibás adatok kezelése
+        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({ message: "Hibás e-mail vagy jelszó!" })
+        }
+
+        //Csak jóváhagyott ember tudjon belépni
+        if (user.approved === 0) {
+            return res.status(403).json({ message: "Fiókod jóváhagyásra vár." })
+        }
+
+        const token = jwt.sign(
+           { user_id: user.user_id, profile_type: user.profile_type },
+           process.env.JWT_SECRET,
+           { expiresIn: '24h' } 
+        )
+
+        res.json({
+            token,
+            user: { id: user.user_id, name: user.name, profile_type: user.profile_type}
+        })
+    }
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Hiba történt a bejelentkezés során!" })
+    }
+}
