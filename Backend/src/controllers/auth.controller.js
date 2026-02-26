@@ -11,7 +11,7 @@ export const register = async (req, res) => {
 
         //Hiányzó adatok kezelése
         if (!name || !email || !password || !phone) {
-            return res.status(400).json({ message: "Minden mező kitöltése kötelező!" })
+            return res.status(400).json({ message: "A név, email, jelszó, telefonszám mezők kitöltése kötelező!" })
         }
 
         //Szolgáltatóknál kötelező a szakma is
