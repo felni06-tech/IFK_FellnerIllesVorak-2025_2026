@@ -39,8 +39,8 @@ export const UserModel = {
             const userId = result.insertId
 
             await connection.commit()
-            return userId
-
+            return { userId, providerId }
+            
         } catch (error) {
             await connection.rollback()
             throw error

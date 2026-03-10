@@ -1,5 +1,20 @@
 import { ProviderModel } from '../models/provider.model'
 
+export const getAllProviders = async (req, res) => {
+    try {
+        const providers = await ProviderModel.getAll()
+
+        res.status(200).json({
+            message: "Szolgáltatók lekérése sikeres.",
+            providers
+        })
+    }
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Hiba a szolgáltatók lekérdezésekor." })
+    }
+}
+
 export const updateMyProfile = async (req, res) => {
     try {
         //A middleware fogja beletenni a requestbe a usert

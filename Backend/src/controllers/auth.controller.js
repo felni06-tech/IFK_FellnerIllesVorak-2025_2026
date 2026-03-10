@@ -2,7 +2,8 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { UserModel } from '../models/user.model.js'
 import { ServiceModel } from '../models/service.model.js'
-import { AdminModel } from '../models/admin.model.js'
+import { ProviderServiceModel } from '../models/providerService.model.js'
+
 
 // --- Regisztráció ---
 export const register = async (req, res) => {
@@ -11,18 +12,12 @@ export const register = async (req, res) => {
 
         //Hiányzó adatok kezelése
         if (!name || !email || !password || !phone) {
-            return res.status(400).json({ message: "A név, email, jelszó, telefonszám mezők kitöltése kötelező!" })
+            return res.status(400).json({ message: "A név, email, jelszó, telefonszám mezők kitöltése kötelező." })
         }
 
         //Szolgáltatóknál kötelező a szakma is
-        if (isProvider) {
-            const service = await ServiceModel.findById(service_id)
-
-            if (!service) {
-                return res.status(400).json({ message: "Érvénytelen szakma!" })
-            }
-
-            req.body.profession = service.name
+        if (isProvider && !service_id) {
+            return res.status(400).json({ message: "Szolgáltatóknak a szakma kiválasztása kötelező." })
         }
 
         //Nem árt ha nincs két ugyanolyan felhasználó
@@ -34,14 +29,22 @@ export const register = async (req, res) => {
 
         const password_hash = await bcrypt.hash(password, 10)
 
-        const userId = await UserModel.create({
+        const { userId, providerId } = await UserModel.create({
             ...req.body,
             password_hash
         })
 
+        //Szolgáltató és szolgáltatás kapcsolatának létrehozása
+        let providerServiceId = null
+
+        if (providerId != null && service_id) {
+            providerServiceId = ProviderServiceModel.create(providerId, service_id)
+        }
+
         res.status(201).json({
             message: "Sikeres regisztráció!",
             userId,
+            providerServiceId,
             isPending: true
         })
     }

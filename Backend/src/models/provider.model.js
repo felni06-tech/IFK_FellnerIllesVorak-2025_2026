@@ -1,6 +1,13 @@
 import { db } from '../config/db.js'
 
 export const ProviderModel = {
+    getAll: async () => {
+        const [rows] = await db.execute(
+            `SELECT * FROM services`
+        )
+
+        return rows
+    },
     //Profil frissítése
     updateProfile: async (providerId, data) => {
         const { address, profession, description } = data

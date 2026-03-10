@@ -1,13 +1,12 @@
 import { db } from '../config/db.js'
 
 export const ProviderServiceModel = {
-    //új szolgáltató hozzárendelése egy szolgáltatáshoz
-    assingProvider: async (provider_id, service_id) => {
-        const { provider_id, service_id, price, duration_minutes, details } = data
+    //új szolgáltató és szolgáltatás kapcsolatának létrehozása
+    create: async (provider_id, service_id) => {
         const [result] = await db.execute(
-            `INSERT INTO provider_services (provider_id, service_id, price, duration_minutes, details)
-            VALUES (?, ?, ?, ?, ?)`,
-            [provider_id, service_id, price, duration_minutes, details]
+            `INSERT INTO provider_services (provider_id, service_id)
+            VALUES (?, ?)`,
+            [provider_id, service_id]
         )
 
         return result.insertId
