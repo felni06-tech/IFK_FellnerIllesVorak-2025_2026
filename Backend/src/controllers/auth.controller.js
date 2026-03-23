@@ -20,6 +20,16 @@ export const register = async (req, res) => {
             return res.status(400).json({ message: "Szolgáltatóknak a szakma kiválasztása kötelező." })
         }
 
+        let profession = ""
+
+        if (service_id) {
+            const service = await ServiceModel.findById(service_id)
+
+            if (service) {
+                profession = service.name
+            }
+        }
+
         //Nem árt ha nincs két ugyanolyan felhasználó
         const existingUser = await UserModel.findByEmail(email)
 
@@ -31,6 +41,7 @@ export const register = async (req, res) => {
 
         const { userId, providerId } = await UserModel.create({
             ...req.body,
+            profession,
             password_hash
         })
 
@@ -38,7 +49,7 @@ export const register = async (req, res) => {
         let providerServiceId = null
 
         if (providerId != null && service_id) {
-            providerServiceId = ProviderServiceModel.create(providerId, service_id)
+            providerServiceId = await ProviderServiceModel.create(providerId, service_id)
         }
 
         res.status(201).json({
