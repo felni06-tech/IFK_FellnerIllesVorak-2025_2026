@@ -100,7 +100,12 @@ export const login = async (req, res) => {
         res.json(
         {
             token,
-            user: { id: user.id, name: user.name, isProvider: user.provider_id != null }
+            user: {
+                id: user.id,
+                name: user.name,
+                isProvider: user.provider_id != null,
+                providerId: user.provider_id
+            }
         })
     }
     catch (error) {

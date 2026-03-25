@@ -23,7 +23,7 @@ export const verifyToken = (req, res, next) => {
 
 //Speciális middleware csak szolgáltatóknak
 export const isProvider = (req, res, next) => {
-    if (req.user.providerId == null) {
+    if (req.user.provider_id == null) {
         return res.status(403).json({ message: "Ehhez a művelethez szolgáltatói fiók szükséges!" })
     }
 

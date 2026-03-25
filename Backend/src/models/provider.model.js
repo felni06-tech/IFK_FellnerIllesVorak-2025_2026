@@ -3,21 +3,21 @@ import { db } from '../config/db.js'
 export const ProviderModel = {
     getAll: async () => {
         const [rows] = await db.execute(
-            `SELECT * FROM services`
+            `SELECT * FROM providers`
         )
 
         return rows
     },
     //Profil frissítése
     updateProfile: async (providerId, data) => {
-        const { address, profession, description } = data
+        const { address, description } = data
 
         //Frissítjük a 'providers' táblát a 'id' alapján
         const [result] = await db.execute(
             `UPDATE providers
-            SET address = ?, profession = ?, description = ?
+            SET address = ?, description = ?
             WHERE id = ?`,
-            [address, profession, description, providerId]
+            [address, description, providerId]
         )
 
         return result

@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 //Útvonalak importálása
 import authRoutes from './routes/auth.routes.js'
 import adminRoutes from './routes/admin.routes.js'
+import providerRoutes from './routes/provider.routes.js'
 
 
 dotenv.config()
@@ -20,6 +21,7 @@ app.use((req, res, next) => {
 //Útvonalak
 app.use('/api/auth', authRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/provider', providerRoutes)
 
 
 app.use((req,res) => {
