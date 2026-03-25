@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regisztráció</title>
+    <link rel="icon" type="image/png" href="IMG_3871.PNG">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+        <header> <!-- navigation bar -->
+        <nav>
+            <div class="nav-container">
+                <a href="felhaszfooldal.html"><h1>Időpontfoglaló<img class="brand-logo" src="IMG_3871.PNG" alt="Logo"></h1></a>
+                <div id="nav-links">
+                    <a href="bejelentkezes.html">Bejelentkezés</a> <!-- Login Gomb-->
+                    <a href="regisztracio.html">Regisztráció</a> <!-- Register Gomb-->
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+         <section id="hero-section" class="hero">
+           <div class="auth-container">
+                <div class="auth-form">
+                    <h2>Regisztráció</h2>
+                    <form id="register">
+                        <div class="form-group">
+                            <label for="register-name">Teljes név</label>
+                            <input id="register-name" type="text" name="name" placeholder="Vezetéknév Keresztnév" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-email">Email cím</label>
+                            <input id="register-email" type="email" name="email" placeholder="pelda@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-password">Jelszó</label>
+                            <input id="register-password" type="password" name="password" placeholder="Legalább 8 karakter" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register-phone">Telefonszám</label>
+                            <input id="register-phone" type="text" name="phone" placeholder="+36 30 123 4567" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Szerepkör</label>
+                            <div class="role-options">
+                                <label class="role-option" for="register-role-user">
+                                    <input id="register-role-user" type="radio" name="role" value="user" checked>
+                                    Felhasználó
+                                </label>
+                                <label class="role-option" for="register-role-provider">
+                                    <input id="register-role-provider" type="radio" name="role" value="provider">
+                                    Szolgáltató
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="service-id-group" style="display:none;">
+                            <label for="register-service-id">Szakma / szolgáltatás</label>
+                            <select id="register-service-id" name="service_id">
+                                <option value="">Betöltés...</option>
+                            </select>
+                        </div>
+
+                        <button type="submit">Regisztráció</button>
+                    </form>
+                    <p id="register-message" style="margin-top: 1rem; padding: 0.8rem; border-radius: 8px; display: none;"></p>
+                    <p>Már van fiókod? <a href="bejelentkezes.html">Bejelentkezés</a></p>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
