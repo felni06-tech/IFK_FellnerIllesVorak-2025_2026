@@ -55,7 +55,6 @@ export const register = async (req, res) => {
         res.status(201).json({
             message: "Sikeres regisztráció!",
             userId,
-            providerServiceId,
             isPending: true
         })
     }

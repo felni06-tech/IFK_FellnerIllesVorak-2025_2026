@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import authRoutes from './routes/auth.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import providerRoutes from './routes/provider.routes.js'
+import appointmentRoutes from './routes/appointment.routes.js'
 
 
 dotenv.config()
@@ -22,6 +23,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/provider', providerRoutes)
+app.use('/api/appointments', appointmentRoutes)
 
 
 app.use((req,res) => {
