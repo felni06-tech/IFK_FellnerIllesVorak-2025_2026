@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Időpontfoglaló - Admin</title>
+    <link rel="icon" type="image/png" href="../IMG_3871.PNG" />
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <div class="nav-container">
+          <a href="../felhaszfooldal.html"><h1>Időpontfoglaló<img class="brand-logo" src="../IMG_3871.PNG" alt="Logo"></h1></a>
+          <div id="nav-links">
+            <a href="../bejelentkezes.html">Bejelentkezés</a>
+            <a href="../regisztracio.html">Regisztráció</a>
+            <a href="index.html">Admin</a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section id="user-content">
+        <h2>Admin felület</h2>
+        <p class="admin-subtitle">Regisztrációk jóváhagyása és alapadatok kezelése egy helyen.</p>
+        <div id="adminLoginSection" class="appointment-form admin-grid">
+          <article class="service-card admin-card-wide">
+            <h3>Admin bejelentkezés</h3>
+            <p class="admin-card-hint">A további admin funkciók belépés után jelennek meg.</p>
+            <form id="adminLoginForm">
+              <div class="form-group">
+                <label for="admin-email">Admin email</label>
+                <input id="admin-email" name="email" type="email" placeholder="admin@email.com" required />
+              </div>
+              <div class="form-group">
+                <label for="admin-password">Jelszó</label>
+                <input id="admin-password" name="password" type="password" placeholder="••••••••" required />
+              </div>
+              <button class="btn" type="submit">Belépés</button>
+            </form>
+          </article>
+        </div>
+
+        <div id="adminManagementSection" class="hidden" style="display: none;">
+          <div class="admin-toolbar">
+            <button id="loadPendingBtnTop" class="btn btn-success" type="button">Jóváhagyások frissítése</button>
+            <button id="adminLogoutBtn" class="btn" type="button">Kijelentkezés</button>
+          </div>
+
+          <div class="appointment-form admin-grid">
+            <article class="service-card admin-card-wide">
+              <h3>1. Jóváhagyásra váró regisztrációk</h3>
+              <p class="admin-card-hint">A jóváhagyás után a felhasználó be tud jelentkezni.</p>
+              <button id="loadPendingBtn" class="btn btn-success" type="button">Lista frissítése</button>
+              <div id="pendingList" class="admin-table-wrap"></div>
+            </article>
+
+            <article class="service-card">
+              <h3>2. Új admin létrehozása</h3>
+              <p class="admin-card-hint">Új admin fiók hozzáadása a rendszerhez.</p>
+              <form id="createAdminForm">
+                <div class="form-group">
+                  <label for="new-admin-name">Név</label>
+                  <input id="new-admin-name" name="name" required />
+                </div>
+                <div class="form-group">
+                  <label for="new-admin-email">Email</label>
+                  <input id="new-admin-email" name="email" type="email" required />
+                </div>
+                <div class="form-group">
+                  <label for="new-admin-phone">Telefonszám</label>
+                  <input id="new-admin-phone" name="phone" required />
+                </div>
+                <div class="form-group">
+                  <label for="new-admin-password">Jelszó</label>
+                  <input id="new-admin-password" name="password" type="password" required />
+                </div>
+                <button class="btn" type="submit">Admin létrehozása</button>
+              </form>
+            </article>
+
+            <article class="service-card">
+              <h3>3. Új szolgáltatás</h3>
+              <p class="admin-card-hint">A regisztráló szolgáltatók ezek közül választanak szakmát.</p>
+              <form id="createServiceForm">
+                <div class="form-group">
+                  <label for="service-name">Megnevezés</label>
+                  <input id="service-name" name="service_name" required />
+                </div>
+                <div class="form-group">
+                  <label for="service-category">Kategória</label>
+                  <select id="service-category" name="category" required>
+                    <option value="">-- Válassz --</option>
+                    <option value="Szépség">Szépség</option>
+                    <option value="Egészség">Egészség</option>
+                    <option value="Sport">Sport</option>
+                    <option value="Oktatás">Oktatás</option>
+                    <option value="Egyéb">Egyéb</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="service-description">Leírás</label>
+                  <textarea id="service-description" name="description" rows="3" placeholder="Rövid leírás"></textarea>
+                </div>
+                <button class="btn btn-success" type="submit">Szolgáltatás létrehozása</button>
+              </form>
+            </article>
+          </div>
+        </div>
+        <p data-notice class="admin-notice"></p>
+      </section>
+    </main>
+
+    <script type="module" src="../assets/admin.js"></script>
+  </body>
+</html>
