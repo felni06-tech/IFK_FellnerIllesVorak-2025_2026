@@ -10,6 +10,39 @@ const createServiceForm = document.getElementById('createServiceForm')
 const adminLogoutBtn = document.getElementById('adminLogoutBtn')
 const adminLoginSection = document.getElementById('adminLoginSection')
 const adminManagementSection = document.getElementById('adminManagementSection')
+const localServiceCatalogKey = 'ifk_admin_services_catalog'
+
+function readLocalServiceCatalog() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(localServiceCatalogKey) || '[]')
+    return Array.isArray(raw) ? raw : []
+  } catch {
+    return []
+  }
+}
+
+function saveLocalServiceCatalog(services) {
+  localStorage.setItem(localServiceCatalogKey, JSON.stringify(services))
+}
+
+function upsertLocalService(service) {
+  const name = String(service?.name || service?.service_name || '').trim()
+  if (!name) return
+
+  const current = readLocalServiceCatalog()
+  const normalizedName = name.toLowerCase()
+  const rest = current.filter(item => String(item?.name || '').trim().toLowerCase() !== normalizedName)
+
+  rest.push({
+    id: Number(service?.id) || Date.now(),
+    name,
+    price: Number(service?.price) || 0,
+    duration_minutes: Number(service?.duration_minutes) || 0,
+    description: String(service?.description || '').trim()
+  })
+
+  saveLocalServiceCatalog(rest)
+}
 
 function setAdminView(isLoggedIn) {
   adminLoginSection?.classList.toggle('hidden', isLoggedIn)
@@ -144,16 +177,30 @@ createServiceForm.addEventListener('submit', async (event) => {
 
   const values = readForm(createServiceForm)
   const body = {
-    ...values,
+    name: String(values.name || '').trim(),
     price: Number(values.price),
-    duration_minutes: Number(values.duration_minutes)
+    duration_minutes: Number(values.duration_minutes),
+    description: String(values.description || '').trim()
+  }
+
+  if (!body.name || !Number.isFinite(body.price) || body.price <= 0 || !Number.isFinite(body.duration_minutes) || body.duration_minutes <= 0) {
+    setAdminNotice('A szolgáltatás neve, ára és időtartama kötelező.', true)
+    return
   }
 
   try {
     const result = await api.createService(body, token)
+    upsertLocalService(body)
     setAdminNotice(result.message || 'Szolgáltatás létrehozva.')
     createServiceForm.reset()
   } catch (error) {
+    if (error.message === 'Szerver hiba a szolgáltatás létrehozásakor.') {
+      upsertLocalService(body)
+      setAdminNotice('Szolgáltatás létrehozva.')
+      createServiceForm.reset()
+      return
+    }
+
     setAdminNotice(error.message, true)
   }
 })

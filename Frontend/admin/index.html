@@ -87,18 +87,15 @@
               <form id="createServiceForm">
                 <div class="form-group">
                   <label for="service-name">Megnevezés</label>
-                  <input id="service-name" name="service_name" required />
+                  <input id="service-name" name="name" required />
                 </div>
                 <div class="form-group">
-                  <label for="service-category">Kategória</label>
-                  <select id="service-category" name="category" required>
-                    <option value="">-- Válassz --</option>
-                    <option value="Szépség">Szépség</option>
-                    <option value="Egészség">Egészség</option>
-                    <option value="Sport">Sport</option>
-                    <option value="Oktatás">Oktatás</option>
-                    <option value="Egyéb">Egyéb</option>
-                  </select>
+                  <label for="service-price">Ár (Ft)</label>
+                  <input id="service-price" name="price" type="number" min="1" step="1" required />
+                </div>
+                <div class="form-group">
+                  <label for="service-duration">Időtartam (perc)</label>
+                  <input id="service-duration" name="duration_minutes" type="number" min="1" step="1" required />
                 </div>
                 <div class="form-group">
                   <label for="service-description">Leírás</label>

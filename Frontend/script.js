@@ -1,34 +1,18 @@
-const providers = [
-	{
-		id: 1,
-		name: 'Fodrász Anna',
-		services: ['Női hajvágás', 'Férfi hajvágás', 'Festés'],
-		slots: ['09:00', '10:00', '11:00', '14:00', '15:00']
-	},
-	{
-		id: 2,
-		name: 'Kozmetika Lili',
-		services: ['Arctisztítás', 'Smink', 'Szemöldök formázás'],
-		slots: ['10:30', '11:30', '13:30', '16:00']
-	},
-	{
-		id: 3,
-		name: 'Masszázs Péter',
-		services: ['Svédmasszázs', 'Sportmasszázs', 'Talpmasszázs'],
-		slots: ['08:30', '09:30', '12:00', '17:00']
-	}
-]
-
 const API_BASE = 'http://localhost:3000'
 const USER_TOKEN_KEY = 'ifk_user_token'
 const USER_INFO_KEY = 'ifk_user_info'
 const LOGIN_ROLE_MAP_KEY = 'ifk_login_role_map'
+const PROVIDER_REGISTRY_KEY = 'ifk_provider_registry'
+const ACTIVE_PROVIDER_KEY = 'ifk_active_providers'
 
 let selectedDate = null
 let selectedTime = null
 
 const bookingStorageKey = 'ifk_bookings'
 const reviewStorageKey = 'ifk_reviews'
+const localServiceCatalogKey = 'ifk_admin_services_catalog'
+const defaultProviderSlots = ['09:00', '10:00', '11:00', '14:00', '15:00']
+let availableServices = []
 
 async function apiRequest(path, options = {}, token = '') {
 	const headers = {
@@ -78,8 +62,73 @@ function getUserInfo() {
 }
 
 function logoutUser() {
+	const user = getUserInfo()
+	if (user?.isProvider && user?.loginRole === 'provider') {
+		deactivateProvider(user.email)
+	}
 	localStorage.removeItem(USER_TOKEN_KEY)
 	localStorage.removeItem(USER_INFO_KEY)
+}
+
+function readArray(key) {
+	try {
+		const raw = JSON.parse(localStorage.getItem(key) || '[]')
+		return Array.isArray(raw) ? raw : []
+	} catch {
+		return []
+	}
+}
+
+function saveArray(key, value) {
+	localStorage.setItem(key, JSON.stringify(value))
+}
+
+function upsertProviderRegistry(provider) {
+	const email = String(provider?.email || '').trim().toLowerCase()
+	const name = String(provider?.name || '').trim()
+	if (!email || !name) return
+
+	const registry = readArray(PROVIDER_REGISTRY_KEY)
+	const next = registry.filter(item => String(item?.email || '').trim().toLowerCase() !== email)
+	next.push({
+		email,
+		name,
+		providerId: Number(provider?.providerId) || null
+	})
+	saveArray(PROVIDER_REGISTRY_KEY, next)
+}
+
+function activateProvider(provider) {
+	const email = String(provider?.email || '').trim().toLowerCase()
+	const name = String(provider?.name || '').trim()
+	if (!email || !name) return
+
+	upsertProviderRegistry(provider)
+
+	const activeProviders = readArray(ACTIVE_PROVIDER_KEY)
+	const next = activeProviders.filter(item => String(item?.email || '').trim().toLowerCase() !== email)
+	next.push({
+		id: Number(provider?.providerId) || Date.now(),
+		email,
+		name,
+		slots: Array.isArray(provider?.slots) && provider.slots.length ? provider.slots : defaultProviderSlots
+	})
+	saveArray(ACTIVE_PROVIDER_KEY, next)
+}
+
+function deactivateProvider(email) {
+	const normalizedEmail = String(email || '').trim().toLowerCase()
+	if (!normalizedEmail) return
+
+	const activeProviders = readArray(ACTIVE_PROVIDER_KEY)
+	saveArray(
+		ACTIVE_PROVIDER_KEY,
+		activeProviders.filter(item => String(item?.email || '').trim().toLowerCase() !== normalizedEmail)
+	)
+}
+
+function getProviders() {
+	return readArray(ACTIVE_PROVIDER_KEY)
 }
 
 function getStoredLoginRole(email) {
@@ -154,7 +203,21 @@ function getDateKey(date) {
 	return date.toISOString().split('T')[0]
 }
 
+function getLocalServices() {
+	try {
+		const raw = JSON.parse(localStorage.getItem(localServiceCatalogKey) || '[]')
+		return Array.isArray(raw) ? raw : []
+	} catch {
+		return []
+	}
+}
+
 async function getServices() {
+	const localServices = getLocalServices()
+	if (localServices.length) {
+		return localServices
+	}
+
 	try {
 		const services = await apiRequest('/api/services')
 		return Array.isArray(services) ? services : []
@@ -176,7 +239,21 @@ function renderServiceSelect(select, services, placeholder = 'Válassz...') {
 		.join('')
 }
 
+function getServiceDisplayName(service) {
+	return String(service?.service_name ?? service?.name ?? '')
+}
+
+function getServiceId(service) {
+	return Number(service?.service_id ?? service?.id)
+}
+
 function renderProviderOptions(elements) {
+	const providers = getProviders()
+	if (!providers.length) {
+		elements.providerSelect.innerHTML = '<option value="">Nincs elérhető, bejelentkezett szolgáltató</option>'
+		return
+	}
+
 	elements.providerSelect.innerHTML = providers
 		.map(provider => `<option value="${provider.id}">${provider.name}</option>`)
 		.join('')
@@ -184,18 +261,17 @@ function renderProviderOptions(elements) {
 
 function getSelectedProvider(elements) {
 	const providerId = Number(elements.providerSelect.value)
-	return providers.find(provider => provider.id === providerId)
+	return getProviders().find(provider => provider.id === providerId)
 }
 
 function renderServiceOptions(elements) {
-	const provider = getSelectedProvider(elements)
-	if (!provider) {
+	if (!availableServices.length) {
 		elements.serviceSelect.innerHTML = ''
 		return
 	}
 
-	elements.serviceSelect.innerHTML = provider.services
-		.map(service => `<option value="${service}">${service}</option>`)
+	elements.serviceSelect.innerHTML = availableServices
+		.map(service => `<option value="${getServiceId(service)}">${getServiceDisplayName(service)}</option>`)
 		.join('')
 }
 
@@ -285,6 +361,12 @@ function renderBookings(elements) {
 }
 
 function renderReviewProviderOptions(elements) {
+	const providers = getProviders()
+	if (!providers.length) {
+		elements.reviewProviderSelect.innerHTML = '<option value="">Nincs elérhető, bejelentkezett szolgáltató</option>'
+		return
+	}
+
 	elements.reviewProviderSelect.innerHTML = providers
 		.map(provider => `<option value="${provider.id}">${provider.name}</option>`)
 		.join('')
@@ -292,18 +374,17 @@ function renderReviewProviderOptions(elements) {
 
 function getSelectedReviewProvider(elements) {
 	const providerId = Number(elements.reviewProviderSelect.value)
-	return providers.find(provider => provider.id === providerId)
+	return getProviders().find(provider => provider.id === providerId)
 }
 
 function renderReviewServiceOptions(elements) {
-	const provider = getSelectedReviewProvider(elements)
-	if (!provider) {
+	if (!availableServices.length) {
 		elements.reviewServiceSelect.innerHTML = ''
 		return
 	}
 
-	elements.reviewServiceSelect.innerHTML = provider.services
-		.map(service => `<option value="${service}">${service}</option>`)
+	elements.reviewServiceSelect.innerHTML = availableServices
+		.map(service => `<option value="${getServiceId(service)}">${getServiceDisplayName(service)}</option>`)
 		.join('')
 }
 
@@ -334,7 +415,9 @@ function renderReviews(elements) {
 
 function handleReview(elements) {
 	const provider = getSelectedReviewProvider(elements)
-	const service = elements.reviewServiceSelect.value
+	const serviceId = Number(elements.reviewServiceSelect.value)
+	const selectedService = availableServices.find(service => getServiceId(service) === serviceId)
+	const service = selectedService ? getServiceDisplayName(selectedService) : ''
 	const rating = Number(elements.reviewRating.value)
 	const comment = elements.reviewComment.value.trim()
 
@@ -361,7 +444,9 @@ function handleReview(elements) {
 
 function handleBooking(elements) {
 	const provider = getSelectedProvider(elements)
-	const service = elements.serviceSelect.value
+	const serviceId = Number(elements.serviceSelect.value)
+	const selectedService = availableServices.find(service => getServiceId(service) === serviceId)
+	const service = selectedService ? getServiceDisplayName(selectedService) : ''
 
 	if (!provider || !service || !selectedDate || !selectedTime) {
 		setBookingMessage(elements, 'Kérlek válassz szolgáltatót, szolgáltatást, napot és időpontot.', true)
@@ -424,7 +509,11 @@ function initBookingPage() {
 	}
 
 	renderProviderOptions(elements)
-	renderServiceOptions(elements)
+	getServices().then(services => {
+		availableServices = services
+		renderServiceOptions(elements)
+		renderReviewServiceOptions(elements)
+	})
 	renderCalendar(elements)
 	renderTimeSlots(elements)
 	renderBookings(elements)
@@ -492,8 +581,20 @@ function initLoginPage() {
 			})
 
 			saveUserToken(result.token)
-			saveUserInfo(result.user)
+			const userInfo = {
+				...result.user,
+				email,
+				loginRole: selectedLoginRole
+			}
+			saveUserInfo(userInfo)
 			saveStoredLoginRole(email, selectedLoginRole)
+			if (result.user?.isProvider && selectedLoginRole === 'provider') {
+				activateProvider({
+					email,
+					name: result.user.name,
+					providerId: result.user.providerId
+				})
+			}
 			const providerEmails = JSON.parse(localStorage.getItem('ifk_provider_emails') || '[]')
 			if (selectedLoginRole === 'provider' || providerEmails.includes(email)) {
 				window.location.href = 'szolgaltato.html'
@@ -570,6 +671,10 @@ function initRegisterPage() {
 			})
 
 			if (body.isProvider) {
+				upsertProviderRegistry({
+					email: body.email,
+					name: body.name
+				})
 				const providerEmails = JSON.parse(localStorage.getItem('ifk_provider_emails') || '[]')
 				providerEmails.push(body.email)
 				localStorage.setItem('ifk_provider_emails', JSON.stringify([...new Set(providerEmails)]))

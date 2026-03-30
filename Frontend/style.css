@@ -186,6 +186,15 @@ main {
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 
+.auth-form p a {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.auth-form p a:hover {
+  color: #764ba2;
+}
+
 .dashboard-nav {
   display: flex;
   gap: 1rem;
