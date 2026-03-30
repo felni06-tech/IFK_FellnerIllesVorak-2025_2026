@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regisztráció</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+        <header> <!-- navigation bar -->
+        <nav>
+            <div class="nav-container">
+                <a href="index.html"><h1>Időpontfoglaló</h1></a>
+                <div id="nav-links">
+                    <a href="bejelentkezes.html">Bejelentkezés</a> <!-- Login Gomb-->
+                    <a href="regisztracio.html">Regisztráció</a> <!-- Register Gomb-->
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+         <section id="hero-section" class="hero">
+           <div class="hero-content">
+            <h2>Regisztráció</h2>
+            <form id="register">
+            <input type="text" name="name" placeholder="Név" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Jelszó" required>
+            <select name="role" placeholder="Szerepkör">
+              <option value="user">Felhasználó</option>
+              <option value="provider">Szolgáltató</option>
+            </select>
+            <button type="submit">Regisztráció</button>
+          </form>
+            <p>Van már fiókod? <a href="bejelentkezes.html">Bejelentkezés</a></p>
+        </div>
+        </section>
+    </main>
+</body>
+</html>
