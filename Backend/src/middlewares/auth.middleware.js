@@ -23,9 +23,18 @@ export const verifyToken = (req, res, next) => {
 
 //Speciális middleware csak szolgáltatóknak
 export const isProvider = (req, res, next) => {
-    if (req.user.profile_type !== 'provider') {
+    if (req.user.provider_id == null) {
         return res.status(403).json({ message: "Ehhez a művelethez szolgáltatói fiók szükséges!" })
     }
 
     next()
+}
+
+export const verifyAdmin = (req, res, next) => {
+    // A verifyToken már korábban lefutott, így a req.user létezik
+    if (req.user && req.user.role === 'admin') {
+        next()
+    } else {
+        return res.status(403).json({ message: "Hozzáférés megtagadva! Admin jog szükséges." });
+    }
 }

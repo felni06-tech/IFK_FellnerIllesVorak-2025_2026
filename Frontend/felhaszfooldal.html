@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Időpontfoglaló</title>
+    <link rel="icon" type="image/png" href="IMG_3871.PNG">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <nav>
+        <div class="nav-container">
+            <a href="felhaszfooldal.html"><h1>Időpontfoglaló<img class="brand-logo" src="IMG_3871.PNG" alt="Logo"></h1></a>
+            <div id="nav-links">
+                <a href="#" id="logoutLink">Kijelentkezés</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <section id="user-content">
+        <h2>Időpontfoglalás</h2>
+
+        <div class="appointment-form">
+            <div class="form-group">
+                <label for="providerSelect">Szolgáltató</label>
+                <select id="providerSelect"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="serviceSelect">Szolgáltatás</label>
+                <select id="serviceSelect"></select>
+            </div>
+
+            <div class="form-group">
+                <label>Válassz napot</label>
+                <div id="calendar" class="calendar"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Válassz időpontot</label>
+                <div id="timeSlots" class="time-slots"></div>
+            </div>
+
+            <button id="bookBtn" class="btn btn-success" type="button">Foglalás megerősítése</button>
+            <p id="bookingMessage"></p>
+        </div>
+    </section>
+
+    <section id="provider-content" style="margin-top: 1.5rem;">
+        <h2>Foglalásaim</h2>
+        <div id="bookingsList"></div>
+    </section>
+
+    <section id="user-content" style="margin-top: 1.5rem;">
+        <h2>Értékelés és vélemény</h2>
+        <div class="appointment-form">
+            <div class="form-group">
+                <label for="reviewProviderSelect">Szolgáltató</label>
+                <select id="reviewProviderSelect"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="reviewServiceSelect">Szolgáltatás</label>
+                <select id="reviewServiceSelect"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="reviewRating">Értékelés</label>
+                <select id="reviewRating">
+                    <option value="5">5 - Kiváló</option>
+                    <option value="4">4 - Jó</option>
+                    <option value="3">3 - Közepes</option>
+                    <option value="2">2 - Gyenge</option>
+                    <option value="1">1 - Rossz</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="reviewComment">Vélemény</label>
+                <textarea id="reviewComment" placeholder="Írd le röviden a tapasztalatodat..." required></textarea>
+            </div>
+
+            <button id="reviewBtn" class="btn" type="button">Értékelés elküldése</button>
+            <p id="reviewMessage"></p>
+        </div>
+
+        <div class="reviews" style="margin-top: 1rem;">
+            <h3>Korábbi vélemények</h3>
+            <div id="reviewsList"></div>
+        </div>
+    </section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>

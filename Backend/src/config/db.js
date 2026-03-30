@@ -3,10 +3,10 @@ import dotenv from 'dotenv'
 
 //Adatbázis kapcsolat létesítése
 export const db = mysql.createPool({
-    host: process.dotenv.DB_HOST || 'localhost',
-    user: process.dotenv.DB_USER || 'root',
-    password: process.dotenv.DB_PASSWORD || '',
-    database: process.dotenv.DB_NAME || 'ifk_projekt2526',
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'ifk_projekt2526',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0

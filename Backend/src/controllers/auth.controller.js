@@ -1,20 +1,33 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { UserModel } from '../models/user.model'
+import { UserModel } from '../models/user.model.js'
+import { ServiceModel } from '../models/service.model.js'
+import { ProviderServiceModel } from '../models/providerService.model.js'
+
 
 // --- Regisztráció ---
 export const register = async (req, res) => {
     try {
-        const { name, email, password, phone, profile_type, profile_picture, profession } = req.body;
+        const { isProvider, name, email, password, phone, profile_picture, service_id } = req.body;
 
         //Hiányzó adatok kezelése
-        if (!name || !email || !password || !phone || !profile_type) {
-            return res.status(400).json({ message: "Minden mező kitöltése kötelező!" })
+        if (!name || !email || !password || !phone) {
+            return res.status(400).json({ message: "A név, email, jelszó, telefonszám mezők kitöltése kötelező." })
         }
 
         //Szolgáltatóknál kötelező a szakma is
-        if (profile_type === 'provider' && !profession) {
-            return res.status(400).json({ message: "Szolgáltatóknak a szakma megadása kötelező!" })
+        if (isProvider && !service_id) {
+            return res.status(400).json({ message: "Szolgáltatóknak a szakma kiválasztása kötelező." })
+        }
+
+        let profession = ""
+
+        if (service_id) {
+            const service = await ServiceModel.findById(service_id)
+
+            if (service) {
+                profession = service.name
+            }
         }
 
         //Nem árt ha nincs két ugyanolyan felhasználó
@@ -26,12 +39,24 @@ export const register = async (req, res) => {
 
         const password_hash = await bcrypt.hash(password, 10)
 
-        const userData = await UserModel.create({
+        const { userId, providerId } = await UserModel.create({
             ...req.body,
+            profession,
             password_hash
         })
 
-        res.status(201).json({ message: "Sikeres regisztráció!", userData })
+        //Szolgáltató és szolgáltatás kapcsolatának létrehozása
+        let providerServiceId = null
+
+        if (providerId != null && service_id) {
+            providerServiceId = await ProviderServiceModel.create(providerId, service_id)
+        }
+
+        res.status(201).json({
+            message: "Sikeres regisztráció!",
+            userId,
+            isPending: true
+        })
     }
     catch (error) {
         console.error(error)
@@ -62,14 +87,24 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign(
-           { user_id: user.user_id, profile_type: user.profile_type },
+            {
+                id: user.id,
+                name: user.name,
+                provider_id: user.provider_id
+            },
            process.env.JWT_SECRET,
            { expiresIn: '24h' } 
         )
 
-        res.json({
+        res.json(
+        {
             token,
-            user: { id: user.user_id, name: user.name, profile_type: user.profile_type}
+            user: {
+                id: user.id,
+                name: user.name,
+                isProvider: user.provider_id != null,
+                providerId: user.provider_id
+            }
         })
     }
     catch (error) {

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szolgáltatói felület</title>
+    <link rel="icon" type="image/png" href="IMG_3871.PNG">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <nav>
+        <div class="nav-container">
+            <a href="felhaszfooldal.html"><h1>Időpontfoglaló<img class="brand-logo" src="IMG_3871.PNG" alt="Logo"></h1></a>
+            <div id="nav-links">
+                <a href="#" id="logoutLink">Kijelentkezés</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main id="providerPage">
+    <section id="provider-content">
+        <h2>Szolgáltatói kezelő</h2>
+        <p>Itt kezelheted a profilodat és időpontokat generálhatsz a szakmádhoz.</p>
+
+        <div class="appointment-form provider-grid">
+            <article class="service-card">
+                <h3>Profil adatai</h3>
+                <div class="row-actions">
+                    <button id="loadProfileBtn" class="btn" type="button">Profil betöltése</button>
+                </div>
+                <form id="updateProfileForm">
+                    <div class="form-group">
+                        <label for="provider-address">Cím</label>
+                        <input id="provider-address" name="address" placeholder="Pl. Budapest, Példa utca 12." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-description">Leírás</label>
+                        <textarea id="provider-description" name="description" rows="4" placeholder="Mutasd be röviden a szolgáltatásodat"></textarea>
+                    </div>
+                    <button class="btn" type="submit">Profil frissítése</button>
+                </form>
+                <pre id="providerProfileDump" class="provider-dump"></pre>
+            </article>
+
+            <article class="service-card">
+                <h3>Időpontok generálása</h3>
+                <form id="generateAppointmentsForm">
+                    <div class="form-group">
+                        <label for="providerServiceSelect">Szakma / szolgáltatás</label>
+                        <select id="providerServiceSelect" name="service_id" required>
+                            <option value="">Betöltés...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-start">Kezdés</label>
+                        <input id="provider-start" name="start_time" type="datetime-local" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-end">Befejezés</label>
+                        <input id="provider-end" name="end_time" type="datetime-local" required>
+                    </div>
+                    <button class="btn btn-success" type="submit">Időpontok generálása</button>
+                </form>
+            </article>
+        </div>
+
+        <p id="providerMessage" class="provider-message"></p>
+    </section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>

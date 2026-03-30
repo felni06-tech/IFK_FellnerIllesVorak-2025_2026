@@ -1,6 +1,6 @@
-import { db } from '../config/db'
+import { db } from '../config/db.js'
 
-const UserModel = {
+export const UserModel = {
     //Felhasználó keresése e-mail alapján
     findByEmail: async (email) => {
         const [rows] = await db.execute('SELECT * FROM users WHERE email = ?', [email])
@@ -9,33 +9,38 @@ const UserModel = {
 
     //Új felhasználó létrehozása
     create: async (userData) => {
-        const { provider_id, name, email, phone, password_hash, profile_picture } = userData
+        const { isProvider, name, email, phone, password_hash, profile_picture, profession} = userData
 
         const connection = await db.getConnection()
         await connection.beginTransaction()
 
         try {
-            //Mentés az users táblába
+
+            let providerId = null
+
+            //Ha provider akkor oda szúrunk be először
+            if (isProvider) {
+                const [providerResult] = await connection.execute(
+                    `INSERT INTO providers (profession, avg_rating)
+                    VALUES (?, ?)`,
+                  [profession || null, 0.0]
+                )
+
+                providerId = providerResult.insertId
+            }
+
+            //Mentés a 'users' táblába, a 'provider_id' null vagy pedig az előbb létrehozott rekord id-ja
             const [result] = await connection.execute(
                 `INSERT INTO users ( provider_id, name, email, phone, password_hash, profile_picture)
                 VALUES (?, ?, ?, ?, ?, ?)`,
-                [provider_id || null, name, email, phone, password_hash, profile_picture]
+                [providerId, name, email, phone, password_hash, profile_picture || null]
             )
 
             const userId = result.insertId
 
-            //Ha szolgáltatói profil akkor oda is hozzá kell adnunk
-            if (provider_id != null) {
-                await connection.execute(
-                    `INSERT INTO providers (user_id, avg_rating)
-                    VALUES (?, ?)`,
-                    [userId, profession, 0.0]
-                )
-            }
-
             await connection.commit()
-            return userId
-
+            return { userId, providerId }
+            
         } catch (error) {
             await connection.rollback()
             throw error
@@ -44,5 +49,3 @@ const UserModel = {
         }
     } 
 }
-
-export default UserModel
