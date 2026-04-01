@@ -1,5 +1,5 @@
 import { AppointmentModel } from '../models/appointment.model.js'
-import { ServiceModel } from '../models/service.model.js'
+import { ProviderServiceModel } from '../models/providerService.model.js'
 
 export const generateAppointments = async (req, res) => {
     try {
@@ -10,7 +10,7 @@ export const generateAppointments = async (req, res) => {
             return res.status(400).json({ message: "Hiányzó adatok. (szakma, kezdés, vég)" })
         }
 
-        const serviceDetails = await ServiceModel.getProviderServiceDetails(provider_id, service_id)
+        const serviceDetails = await ProviderServiceModel.getProviderServiceDetails(provider_id, service_id)
 
         if (!serviceDetails) {
             return res.status(400).json({ message: "Ez a szolgáltatás nincs hozzárendelve az Ön profiljához." })

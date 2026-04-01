@@ -15,7 +15,7 @@ export const ProviderModel = {
         //Frissítjük a 'providers' táblát a 'id' alapján
         const [result] = await db.execute(
             `UPDATE providers
-            SET address = ?, description = ?
+            SET address = ?, description = ?, 
             WHERE id = ?`,
             [address, description, providerId]
         )
