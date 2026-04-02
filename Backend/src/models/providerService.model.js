@@ -2,11 +2,11 @@ import { db } from '../config/db.js'
 
 export const ProviderServiceModel = {
     //új szolgáltató és szolgáltatás kapcsolatának létrehozása
-    create: async (provider_id, service_id) => {
-        const [result] = await db.execute(
-            `INSERT INTO provider_services (provider_id, service_id, price, duration_minutes, details)
-            VALUES (?, ?, ?, ?, ?)`,
-            [provider_id, service_id, null, null, null] //”price, duration_minutes, details” profil frissítéssel kell megadni
+    create: async (provider_id, service_id, connection = db) => {
+        const [result] = await connection.execute(
+            `INSERT INTO provider_services (provider_id, service_id, price, duration_minutes)
+            VALUES (?, ?, ?, ?)`,
+            [provider_id, service_id, null, null] //price, duration_minutes profil frissítéssel kell megadni
         )
 
         return result.insertId
@@ -23,6 +23,16 @@ export const ProviderServiceModel = {
         )
 
         return result
+    },
+
+    getByProviderId: async (providerId) => {
+        const [rows] = await db.execute(
+            `SELECT * FROM provider_services
+            WHERE provider_id = ?`,
+            [providerId]
+        )
+
+        return rows
     },
 
     //egy szolgáltatás összes szolgáltatójának kikeresése

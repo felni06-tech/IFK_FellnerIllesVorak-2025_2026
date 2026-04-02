@@ -1,4 +1,5 @@
 import { ProviderModel } from '../models/provider.model.js'
+import { ProviderServiceModel } from '../models/providerService.model.js'
 
 export const getAllProviders = async (req, res) => {
     try {
@@ -19,13 +20,15 @@ export const updateMyProfile = async (req, res) => {
     try {
         //A middleware fogja beletenni a requestbe a usert
         const providerId = req.user.provider_id
-        const { address, description } = req.body
+        const serviceId = req.user.service_id
+        const { address, description, price, duration_minutes } = req.body
 
-        if (!address) {
-            return res.status(400).json({ message: "A cím és a szakma megadása kötelező!" })
+        if (!address || !price || !duration_minutes) {
+            return res.status(400).json({ message: "A cím, ár és idő megadása kötelező!" })
         }
 
         await ProviderModel.updateProfile(providerId, { address, description })
+        await ProviderServiceModel.updateDetails(providerId, serviceId, { price, duration_minutes })
 
         res.json({ message: "Profil sikeresen frissítve" })
     }
@@ -39,7 +42,8 @@ export const getMyProfile = async (req, res) => {
     try {
         //A middleware fogja beletenni a requestbe a usert
         const providerId = req.user.provider_id
-        const profile = await ProviderModel.getProfileByProviderId(providerId)
+        const serviceId = req.user.service_id
+        const profile = await ProviderModel.getProfileByProviderId(providerId, serviceId)
 
         if(!profile) {
             return res.status(404).json({ message: "Profil nem található" })

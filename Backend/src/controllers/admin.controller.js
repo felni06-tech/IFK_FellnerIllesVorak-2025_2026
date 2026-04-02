@@ -106,16 +106,16 @@ export const createNewAdmin = async (req, res) => {
 
 export const createNewService = async (req, res) => {
     try {
-        const { name, price, duration_minutes, description } = req.body
+        const { name, description } = req.body
 
-        if (!name || !price || !duration_minutes) {
-            return res.status(400).json({ message: "A név, ár és időtartam mezők kitöltése kötelező." })
+        if (!name || !description) {
+            return res.status(400).json({ message: "A név, leírás mezők kitöltése kötelező." })
         }
 
         const [result] = await db.execute(
-            `INSERT INTO services (name, price, duration_minutes, description)
-            VALUES (?, ?, ?, ?)`,
-            [name, price, duration_minutes, description || null]
+            `INSERT INTO services (name, description)
+            VALUES (?, ?)`,
+            [name, description]
         )
 
         res.status(201).json({
