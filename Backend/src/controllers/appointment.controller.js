@@ -11,6 +11,10 @@ export const generateAppointments = async (req, res) => {
             return res.status(400).json({ message: "Hiányzó adatok. (kezdés, vég)" })
         }
 
+        if (new Date(`1970-01-01T${end_time}`) <= new Date(`1970-01-01T${start_time}`)) {
+            return res.status(400).json({ message: "A befejezési időpontnak később kell lennie, mint a kezdési időpontnak!" })
+        }
+
         const serviceDetails = await ProviderServiceModel.getProviderServiceDetails(providerId, serviceId)
 
         if (!serviceDetails) {
