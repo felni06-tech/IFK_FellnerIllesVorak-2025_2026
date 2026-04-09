@@ -11,5 +11,21 @@ export const AppointmentModel = {
         )
 
         return result.insertId
+    },
+
+    // Megkeressuk a konkret idopontot es megnezzuk, hogy szabad-e
+    findByIdAndCheckAvailable: async (appointmentId) => {
+        const [rows] = await db.execute(
+            `SELECT * FROM appointments WHERE id = ? AND status = 'available'`,
+            [appointmentId]
+        )
+    },
+
+    // Statusz allitas, hogy ne lehessen tobbszor lefoglalni.
+    updateStatus: async (appointmentId, status, connection = db) => {
+        await connection.execute(
+            `UPDATE appointments SET status = ? WHERE id = ?`,
+            [status, appointmentId]
+        )
     }
 }
