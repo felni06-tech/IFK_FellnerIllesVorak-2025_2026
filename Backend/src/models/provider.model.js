@@ -12,26 +12,25 @@ export const ProviderModel = {
     updateProfile: async (providerId, data) => {
         const { address, description } = data
 
-        //Frissítjük a 'providers' táblát a 'provider_id' alapján
+        //Frissítjük a 'providers' táblát a 'id' alapján
         const [result] = await db.execute(
             `UPDATE providers
             SET address = ?, description = ?
-            WHERE provider_id = ?`,
+            WHERE id = ?`,
             [address, description, providerId]
         )
 
         return result
     },
 
-    //Lekérdezzük a profil összes adatát 'provider_id' alapján
-    getProfileByProviderId: async (providerId) => {
+    //Lekérdezzük a profil összes adatát 'id' alapján
+    getProfileByProviderId: async (providerId, serviceId) => {
         const [rows] = await db.execute(
-            `SELECT u.name, u.email, u.phone, u.profile_picture,
-            p.provider_id, p.address, p.profession, p.description, p.avg_rating
-            FROM users u
-            JOIN providers p ON p.user_id = u.user_id
-            WHERE p.provider_id = ?`,
-            [providerId]
+            `SELECT p.*, ps.price, ps.duration_minutes 
+            FROM providers p
+            JOIN provider_services ps ON p.id = ps.provider_id
+            WHERE p.id = ? AND ps.service_id = ?`,
+            [providerId, serviceId]
         )
 
         return rows[0]

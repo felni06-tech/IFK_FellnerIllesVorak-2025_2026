@@ -1,22 +1,27 @@
 import { AppointmentModel } from '../models/appointment.model.js'
-import { ServiceModel } from '../models/service.model.js'
+import { ProviderServiceModel } from '../models/providerService.model.js'
 
 export const generateAppointments = async (req, res) => {
     try {
-        const provider_id = req.user.provider_id
-        const { service_id, start_time, end_time } = req.body
+        const providerId = req.user.provider_id
+        const serviceId = req.user.service_id
+        const { start_time, end_time } = req.body
 
-        if (!service_id || !start_time || !end_time) {
-            return res.status(400).json({ message: "Hiányzó adatok. (szakma, kezdés, vég)" })
+        if ( !start_time || !end_time) {
+            return res.status(400).json({ message: "Hiányzó adatok. (kezdés, vég)" })
         }
 
-        const serviceDetails = await ServiceModel.getProviderServiceDetails(provider_id, service_id)
+        if (new Date(`1970-01-01T${end_time}`) <= new Date(`1970-01-01T${start_time}`)) {
+            return res.status(400).json({ message: "A befejezési időpontnak később kell lennie, mint a kezdési időpontnak!" })
+        }
+
+        const serviceDetails = await ProviderServiceModel.getProviderServiceDetails(providerId, serviceId)
 
         if (!serviceDetails) {
             return res.status(400).json({ message: "Ez a szolgáltatás nincs hozzárendelve az Ön profiljához." })
         }
 
-        const { provider_service_id, duration_minutes } = serviceDetails
+        const { provider_service_id, duration_minutes, price } = serviceDetails
         const slots = []
         
         let current = new Date(start_time)
@@ -42,7 +47,8 @@ export const generateAppointments = async (req, res) => {
 
         res.status(201).json({
             message: `Sikeresen generálva ${slots.length} időpont.`,
-            count: slots.length
+            count: slots.length,
+            price
         })
     }
     catch (error) {

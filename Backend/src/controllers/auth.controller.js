@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { db } from '../config/db.js'
 import { UserModel } from '../models/user.model.js'
 import { ServiceModel } from '../models/service.model.js'
 import { ProviderServiceModel } from '../models/providerService.model.js'
@@ -7,6 +8,8 @@ import { ProviderServiceModel } from '../models/providerService.model.js'
 
 // --- Regisztráció ---
 export const register = async (req, res) => {
+    const connection = await db.getConnection()
+    
     try {
         const { isProvider, name, email, password, phone, profile_picture, service_id } = req.body;
 
@@ -26,7 +29,7 @@ export const register = async (req, res) => {
             const service = await ServiceModel.findById(service_id)
 
             if (service) {
-                profession = service.service_name
+                profession = service.name
             }
         }
 
@@ -39,28 +42,38 @@ export const register = async (req, res) => {
 
         const password_hash = await bcrypt.hash(password, 10)
 
+        await connection.beginTransaction()
+
         const { userId, providerId } = await UserModel.create({
             ...req.body,
             profession,
             password_hash
-        })
+        }, connection)
 
         //Szolgáltató és szolgáltatás kapcsolatának létrehozása
         let providerServiceId = null
 
         if (providerId != null && service_id) {
-            providerServiceId = await ProviderServiceModel.create(providerId, service_id)
+            providerServiceId = await ProviderServiceModel.create(providerId, service_id, connection)
         }
+
+        await connection.commit()
 
         res.status(201).json({
             message: "Sikeres regisztráció!",
             userId,
+            providerId,
+            providerServiceId,
             isPending: true
         })
     }
     catch (error) {
+        await connection.rollback()
         console.error(error)
         res.status(500).json({ message: "Hiba a regisztráció során." })
+    }
+    finally {
+        connection.release()
     }
 }
 
@@ -86,11 +99,20 @@ export const login = async (req, res) => {
             return res.status(403).json({ message: "Fiókod jóváhagyásra vár." })
         }
 
+        let serviceId = null
+
+        if (user.provider_id != null) {
+            const serviceData = await ProviderServiceModel.getByProviderId(user.provider_id)
+
+            serviceId = serviceData && serviceData.length > 0 ? serviceData[0].service_id : null
+        }
+
         const token = jwt.sign(
             {
-                id: user.user_id,
+                id: user.id,
                 name: user.name,
-                provider_id: user.provider_id || null
+                provider_id: user.provider_id,
+                service_id: serviceId
             },
            process.env.JWT_SECRET,
            { expiresIn: '24h' } 
@@ -100,10 +122,11 @@ export const login = async (req, res) => {
         {
             token,
             user: {
-                id: user.user_id,
+                id: user.id,
                 name: user.name,
                 isProvider: user.provider_id != null,
-                providerId: user.provider_id || null
+                providerId: user.provider_id,
+                serviceId
             }
         })
     }

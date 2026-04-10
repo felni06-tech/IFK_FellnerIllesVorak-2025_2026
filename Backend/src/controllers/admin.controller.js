@@ -43,21 +43,10 @@ export const adminLogin = async (req, res) => {
 // Lekérjük az összes olyan usert, aki még nincs jóváhagyva
 export const getPendingRegistrations = async (req, res) => {
     try {
-        // Ket kulonbozo users tabla-schema fordul elo a projektben.
-        try {
-            const [users] = await db.execute(
-                "SELECT user_id AS id, name, email, registration_date AS reg_date FROM users WHERE approved = 0"
-            )
-            return res.status(200).json(users)
-        } catch {
-            const [users] = await db.execute(
-                "SELECT id, name, email, reg_date FROM users WHERE approved = 0"
-            )
-            return res.status(200).json(users)
-        }
+        const [users] = await db.execute("SELECT id, name, email, reg_date FROM users WHERE approved = 0")
+        res.status(200).json(users)
     }
     catch (error) {
-        console.error(error)
         res.status(500).json({ message: "Nem sikerült lekérni a listát." })
     }
 }
@@ -66,20 +55,10 @@ export const approveRegistration = async (req, res) => {
     try {
         const { id } = req.params
 
-        let result
-        try {
-            const [r] = await db.execute(
-                "UPDATE users SET approved = 1 WHERE user_id = ?",
-                [id]
-            )
-            result = r
-        } catch {
-            const [r] = await db.execute(
-                "UPDATE users SET approved = 1 WHERE id = ?",
-                [id]
-            )
-            result = r
-        }
+        const [result] = await db.execute(
+            "UPDATE users SET approved = 1 WHERE id = ?",
+            [id]
+        )
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Nem található ilyen jóváhagyásra váró regisztráció." })
@@ -108,7 +87,7 @@ export const createNewAdmin = async (req, res) => {
 
         const password_hash = await bcrypt.hash(password, 10)
 
-        const [result] = await db.execute(
+        await db.execute(
             `INSERT INTO admins (name, email, phone, password_hash)
             VALUES (?, ?, ?, ?)`,
             [name, email, phone, password_hash]
@@ -127,16 +106,16 @@ export const createNewAdmin = async (req, res) => {
 
 export const createNewService = async (req, res) => {
     try {
-        const { service_name, category, description } = req.body
+        const { name, description } = req.body
 
-        if (!service_name || !category) {
-            return res.status(400).json({ message: "A megnevezés és a kategória megadása kötelező." })
+        if (!name || !description) {
+            return res.status(400).json({ message: "A név, leírás mezők kitöltése kötelező." })
         }
 
         const [result] = await db.execute(
-            `INSERT INTO services (service_name, category, description)
-            VALUES (?, ?, ?)`,
-            [service_name, category, description || null]
+            `INSERT INTO services (name, description)
+            VALUES (?, ?)`,
+            [name, description]
         )
 
         res.status(201).json({
