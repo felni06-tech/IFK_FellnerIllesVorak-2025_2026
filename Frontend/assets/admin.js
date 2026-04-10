@@ -1,6 +1,8 @@
 import { api, authStore } from './api.js'
 import { esc, readForm } from './ui.js'
 
+const serviceCatalogStorageKey = 'ifk_service_catalog'
+
 const adminLoginForm = document.getElementById('adminLoginForm')
 const loadPendingBtn = document.getElementById('loadPendingBtn')
 const loadPendingBtnTop = document.getElementById('loadPendingBtnTop')
@@ -26,8 +28,33 @@ function setAdminNotice(message, isError = false) {
   const notice = document.querySelector('[data-notice]')
   if (!notice) return
 
-  notice.textContent = message || ''
+  const text = String(message || '')
+  const normalizedText = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+  const isSuppressed =
+    normalizedText.includes('nem sikerult lekerni a listat') ||
+    normalizedText.includes('nem sikerult a lista betoltese')
+
+  notice.textContent = isSuppressed ? '' : text
   notice.className = isError ? 'admin-notice error' : 'admin-notice ok'
+}
+
+function isAuthTokenError(error) {
+  const text = String(error?.message || '').toLowerCase()
+  return text.includes('ervenytelen') || text.includes('lejart token') || text.includes('hozzaferes megtagadva')
+}
+
+function handleAdminError(error, fallbackMessage) {
+  if (isAuthTokenError(error)) {
+    authStore.clearAdminToken()
+    setAdminView(false)
+    setAdminNotice('Az admin munkamenet lejart. Jelentkezz be ujra.', true)
+    return
+  }
+
+  setAdminNotice(error?.message || fallbackMessage, true)
 }
 
 function pendingTable(rows) {
@@ -77,7 +104,7 @@ async function loadPending() {
     pendingList.innerHTML = pendingTable(rows)
     setAdminNotice('A lista sikeresen frissítve.')
   } catch (error) {
-    setAdminNotice(error.message, true)
+    handleAdminError(error, 'Nem sikerult a lista betoltese.')
   }
 }
 
@@ -113,7 +140,7 @@ pendingList.addEventListener('click', async (event) => {
     setAdminNotice(result.message || 'Felhasználó jóváhagyva.')
     await loadPending()
   } catch (error) {
-    setAdminNotice(error.message, true)
+    handleAdminError(error, 'A jovahagyas sikertelen.')
   }
 })
 
@@ -130,7 +157,7 @@ createAdminForm.addEventListener('submit', async (event) => {
     setAdminNotice(result.message || 'Admin létrehozva.')
     createAdminForm.reset()
   } catch (error) {
-    setAdminNotice(error.message, true)
+    handleAdminError(error, 'Az admin letrehozasa sikertelen.')
   }
 })
 
@@ -144,17 +171,27 @@ createServiceForm.addEventListener('submit', async (event) => {
 
   const values = readForm(createServiceForm)
   const body = {
-    ...values,
-    price: Number(values.price),
-    duration_minutes: Number(values.duration_minutes)
+    name: values.name || values.service_name || '',
+    description: values.description || ''
   }
 
   try {
     const result = await api.createService(body, token)
+    try {
+      const current = JSON.parse(localStorage.getItem(serviceCatalogStorageKey) || '[]')
+      const next = Array.isArray(current) ? current : []
+      next.push({
+        id: result?.serviceId || Date.now(),
+        name: body.name
+      })
+      localStorage.setItem(serviceCatalogStorageKey, JSON.stringify(next))
+    } catch {
+      // A lokalis cache hiba nem blokkolja a backend sikeres letrehozast.
+    }
     setAdminNotice(result.message || 'Szolgáltatás létrehozva.')
     createServiceForm.reset()
   } catch (error) {
-    setAdminNotice(error.message, true)
+    handleAdminError(error, 'A szolgaltatas letrehozasa sikertelen.')
   }
 })
 

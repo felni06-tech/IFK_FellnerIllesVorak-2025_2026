@@ -1,4 +1,4 @@
-const providers = [
+const defaultProviders = [
 	{
 		id: 1,
 		name: 'Fodrász Anna',
@@ -19,16 +19,28 @@ const providers = [
 	}
 ]
 
+let providers = [...defaultProviders]
+
 const API_BASE = 'http://localhost:3000'
 const USER_TOKEN_KEY = 'ifk_user_token'
 const USER_INFO_KEY = 'ifk_user_info'
 const LOGIN_ROLE_MAP_KEY = 'ifk_login_role_map'
+const PROVIDER_DIRECTORY_KEY = 'ifk_provider_directory'
 
 let selectedDate = null
 let selectedTime = null
 
 const bookingStorageKey = 'ifk_bookings'
 const reviewStorageKey = 'ifk_reviews'
+const serviceCatalogStorageKey = 'ifk_service_catalog'
+
+const fallbackServices = [
+	{ id: 1, name: 'Fodraszat' },
+	{ id: 2, name: 'Kozmetika' },
+	{ id: 3, name: 'Masszazs' },
+	{ id: 4, name: 'Manikur' },
+	{ id: 5, name: 'Pedikur' }
+]
 
 async function apiRequest(path, options = {}, token = '') {
 	const headers = {
@@ -105,6 +117,80 @@ function saveStoredLoginRole(email, role) {
 	}
 }
 
+function loadProviderDirectory() {
+	try {
+		const raw = JSON.parse(localStorage.getItem(PROVIDER_DIRECTORY_KEY) || '[]')
+		return Array.isArray(raw) ? raw : []
+	} catch {
+		return []
+	}
+}
+
+function saveProviderDirectory(entries) {
+	localStorage.setItem(PROVIDER_DIRECTORY_KEY, JSON.stringify(entries))
+}
+
+function upsertRegisteredProvider({ email, name, profession, serviceId }) {
+	const normalizedEmail = String(email || '').trim().toLowerCase()
+	if (!normalizedEmail || !name || !profession) return
+
+	const directory = loadProviderDirectory()
+	const existing = directory.find(entry => String(entry.email || '').toLowerCase() === normalizedEmail)
+
+	if (existing) {
+		existing.name = name
+		existing.profession = profession
+		existing.serviceId = serviceId
+	} else {
+		directory.push({
+			email: normalizedEmail,
+			name,
+			profession,
+			serviceId,
+			uiId: Date.now() + Math.floor(Math.random() * 1000)
+		})
+	}
+
+	saveProviderDirectory(directory)
+}
+
+function mergeProvidersForUI() {
+	const directory = loadProviderDirectory()
+	const dynamicProviders = directory
+		.filter(entry => entry.name && entry.profession)
+		.map(entry => ({
+			id: Number(entry.uiId),
+			name: entry.name,
+			services: [entry.profession],
+			slots: ['09:00', '10:00', '11:00', '14:00', '15:00']
+		}))
+
+	providers = [...defaultProviders, ...dynamicProviders]
+}
+
+function resolveServiceLabelById(serviceId) {
+	const id = Number(serviceId)
+	if (!id) return ''
+
+	const catalogRaw = localStorage.getItem(serviceCatalogStorageKey)
+	if (catalogRaw) {
+		try {
+			const catalog = JSON.parse(catalogRaw)
+			if (Array.isArray(catalog)) {
+				const matched = catalog.find(item => Number(item?.id ?? item?.service_id) === id)
+				if (matched) {
+					return String(matched?.name ?? matched?.service_name ?? '').trim()
+				}
+			}
+		} catch {
+			// fallback listara valtunk
+		}
+	}
+
+	const fallbackMatch = fallbackServices.find(item => Number(item.id) === id)
+	return fallbackMatch ? fallbackMatch.name : `Szolgáltatás #${id}`
+}
+
 function getBookingElements() {
 	return {
 		providerSelect: document.getElementById('providerSelect'),
@@ -155,12 +241,19 @@ function getDateKey(date) {
 }
 
 async function getServices() {
-	try {
-		const services = await apiRequest('/api/services')
-		return Array.isArray(services) ? services : []
-	} catch {
-		return []
+	const raw = localStorage.getItem(serviceCatalogStorageKey)
+	if (raw) {
+		try {
+			const parsed = JSON.parse(raw)
+			if (Array.isArray(parsed) && parsed.length) {
+				return parsed
+			}
+		} catch {
+			// Fallback listara valtunk, ha a cache serult.
+		}
 	}
+
+	return fallbackServices
 }
 
 function renderServiceSelect(select, services, placeholder = 'Válassz...') {
@@ -423,6 +516,8 @@ function initBookingPage() {
 		return
 	}
 
+	mergeProvidersForUI()
+
 	renderProviderOptions(elements)
 	renderServiceOptions(elements)
 	renderCalendar(elements)
@@ -494,11 +589,22 @@ function initLoginPage() {
 			saveUserToken(result.token)
 			saveUserInfo(result.user)
 			saveStoredLoginRole(email, selectedLoginRole)
-			const providerEmails = JSON.parse(localStorage.getItem('ifk_provider_emails') || '[]')
-			if (selectedLoginRole === 'provider' || providerEmails.includes(email)) {
+
+			const isProviderAccount = Boolean(result?.user?.isProvider)
+			if (isProviderAccount) {
+				upsertRegisteredProvider({
+					email,
+					name: result?.user?.name || email,
+					profession: resolveServiceLabelById(result?.user?.serviceId),
+					serviceId: Number(result?.user?.serviceId || 0)
+				})
+			}
+
+			if (isProviderAccount || selectedLoginRole === 'provider') {
 				window.location.href = 'szolgaltato.html'
 				return
 			}
+
 			window.location.href = 'felhaszfooldal.html'
 		} catch (error) {
 			alert(error.message)
@@ -515,6 +621,23 @@ function initRegisterPage() {
 	const roleInputs = Array.from(document.querySelectorAll('input[name="role"]'))
 	const serviceIdGroup = document.getElementById('service-id-group')
 	const serviceIdInput = document.getElementById('register-service-id')
+	const serviceIdManualInput = document.getElementById('register-service-id-manual')
+	const serviceFallbackHint = document.getElementById('register-service-fallback-hint')
+	let hasServiceList = true
+
+	const updateServiceInputsByMode = isProvider => {
+		if (serviceIdInput) {
+			serviceIdInput.disabled = !hasServiceList
+			serviceIdInput.required = isProvider && hasServiceList
+		}
+		if (serviceIdManualInput) {
+			serviceIdManualInput.style.display = hasServiceList ? 'none' : 'block'
+			serviceIdManualInput.required = isProvider && !hasServiceList
+		}
+		if (serviceFallbackHint) {
+			serviceFallbackHint.style.display = hasServiceList ? 'none' : 'block'
+		}
+	}
 
 	const syncRoleFields = () => {
 		const selectedRole = roleInputs.find(input => input.checked)?.value || 'user'
@@ -522,13 +645,13 @@ function initRegisterPage() {
 		if (serviceIdGroup) {
 			serviceIdGroup.style.display = isProvider ? 'block' : 'none'
 		}
-		if (serviceIdInput) {
-			serviceIdInput.required = isProvider
-		}
+		updateServiceInputsByMode(isProvider)
 	}
 
 	getServices().then(services => {
+		hasServiceList = services.length > 0
 		renderServiceSelect(serviceIdInput, services, 'Válassz szakmát')
+		syncRoleFields()
 	})
 
 	roleInputs.forEach(input => input.addEventListener('change', syncRoleFields))
@@ -558,7 +681,12 @@ function initRegisterPage() {
 			isProvider: role === 'provider'
 		}
 
-		const serviceIdValue = String(formData.get('service_id') || '').trim()
+		const serviceIdValue = hasServiceList
+			? String(formData.get('service_id') || '').trim()
+			: String(serviceIdManualInput?.value || '').trim()
+		const serviceLabel = hasServiceList
+			? String(serviceIdInput?.selectedOptions?.[0]?.textContent || '').trim()
+			: `Szolgáltatás #${serviceIdValue}`
 		if (body.isProvider && serviceIdValue) {
 			body.service_id = Number(serviceIdValue)
 		}
@@ -574,6 +702,12 @@ function initRegisterPage() {
 				providerEmails.push(body.email)
 				localStorage.setItem('ifk_provider_emails', JSON.stringify([...new Set(providerEmails)]))
 				saveStoredLoginRole(body.email, 'provider')
+				upsertRegisteredProvider({
+					email: body.email,
+					name: body.name,
+					profession: serviceLabel || `Szolgáltatás #${serviceIdValue}`,
+					serviceId: Number(serviceIdValue || 0)
+				})
 			}
 			showRegisterMessage(result.message || 'Sikeres regisztráció! Átirányítás...', false)
 			setTimeout(() => {
@@ -598,6 +732,11 @@ function setProviderMessage(message, isError = false) {
 	box.style.color = isError ? '#dc3545' : '#155724'
 }
 
+function parsePositiveNumber(value) {
+	const parsed = Number(value)
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
 function initProviderPage() {
 	const providerPage = document.getElementById('providerPage')
 	if (!providerPage) {
@@ -618,21 +757,27 @@ function initProviderPage() {
 	const loadProfileBtn = document.getElementById('loadProfileBtn')
 	const updateProfileForm = document.getElementById('updateProfileForm')
 	const generateForm = document.getElementById('generateAppointmentsForm')
-	const serviceSelect = document.getElementById('providerServiceSelect')
 	const profileDump = document.getElementById('providerProfileDump')
 
-	getServices().then(services => {
-		renderServiceSelect(serviceSelect, services, 'Válassz szolgáltatást')
-	})
+	const loadProfile = async () => {
+		const profile = await apiRequest('/api/provider/me', {}, token)
+		const addressInput = document.getElementById('provider-address')
+		const descriptionInput = document.getElementById('provider-description')
+		const priceInput = document.getElementById('provider-price')
+		const durationInput = document.getElementById('provider-duration')
+
+		if (addressInput) addressInput.value = profile.address || ''
+		if (descriptionInput) descriptionInput.value = profile.description || ''
+		if (priceInput) priceInput.value = profile.price ?? ''
+		if (durationInput) durationInput.value = profile.duration_minutes ?? ''
+		if (profileDump) profileDump.textContent = JSON.stringify(profile, null, 2)
+
+		return profile
+	}
 
 	loadProfileBtn?.addEventListener('click', async () => {
 		try {
-			const profile = await apiRequest('/api/provider/me', {}, token)
-			const addressInput = document.getElementById('provider-address')
-			const descriptionInput = document.getElementById('provider-description')
-			if (addressInput) addressInput.value = profile.address || ''
-			if (descriptionInput) descriptionInput.value = profile.description || ''
-			if (profileDump) profileDump.textContent = JSON.stringify(profile, null, 2)
+			await loadProfile()
 			setProviderMessage('Profil sikeresen betöltve.')
 		} catch (error) {
 			setProviderMessage(error.message, true)
@@ -644,17 +789,30 @@ function initProviderPage() {
 		const formData = new FormData(updateProfileForm)
 		const address = String(formData.get('address') || '').trim()
 		const description = String(formData.get('description') || '').trim()
+		const price = parsePositiveNumber(formData.get('price'))
+		const durationMinutes = parsePositiveNumber(formData.get('duration_minutes'))
+
+		if (!address || !price || !durationMinutes) {
+			setProviderMessage('A cím, ár és időtartam kitöltése kötelező.', true)
+			return
+		}
 
 		try {
 			const result = await apiRequest(
 				'/api/provider/update',
 				{
 					method: 'POST',
-					body: JSON.stringify({ address, description })
+					body: JSON.stringify({
+						address,
+						description,
+						price,
+						duration_minutes: durationMinutes
+					})
 				},
 				token
 			)
 			setProviderMessage(result.message || 'Profil frissítve.')
+			await loadProfile()
 		} catch (error) {
 			setProviderMessage(error.message, true)
 		}
@@ -663,17 +821,27 @@ function initProviderPage() {
 	generateForm?.addEventListener('submit', async event => {
 		event.preventDefault()
 		const formData = new FormData(generateForm)
-		const serviceId = Number(formData.get('service_id'))
 		const start = toSqlDateTime(String(formData.get('start_time') || ''))
 		const end = toSqlDateTime(String(formData.get('end_time') || ''))
 
+		if (!start || !end || new Date(start) >= new Date(end)) {
+			setProviderMessage('A kezdés időpontja legyen korábbi, mint a befejezés.', true)
+			return
+		}
+
 		try {
+			const profile = await loadProfile()
+			const duration = parsePositiveNumber(profile?.duration_minutes)
+			if (!duration) {
+				setProviderMessage('Időpont generálás előtt add meg a profilnál az időtartamot.', true)
+				return
+			}
+
 			const result = await apiRequest(
 				'/api/appointments/generate',
 				{
 					method: 'POST',
 					body: JSON.stringify({
-						service_id: serviceId,
 						start_time: start,
 						end_time: end
 					})
@@ -685,6 +853,10 @@ function initProviderPage() {
 		} catch (error) {
 			setProviderMessage(error.message, true)
 		}
+	})
+
+	loadProfile().catch(() => {
+		setProviderMessage('Profil automatikus betöltése nem sikerült, kattints a Profil betöltése gombra.', true)
 	})
 }
 

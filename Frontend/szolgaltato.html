@@ -13,9 +13,6 @@
         <div class="nav-container">
             <a href="felhaszfooldal.html"><h1>Időpontfoglaló<img class="brand-logo" src="IMG_3871.PNG" alt="Logo"></h1></a>
             <div id="nav-links">
-                <a href="felhaszfooldal.html">Felhasználó</a>
-                <a href="szolgaltato.html">Szolgáltató</a>
-                <a href="admin/index.html">Admin</a>
                 <a href="#" id="logoutLink">Kijelentkezés</a>
             </div>
         </div>
@@ -25,7 +22,6 @@
 <main id="providerPage">
     <section id="provider-content">
         <h2>Szolgáltatói kezelő</h2>
-        <p>Itt kezelheted a profilodat és időpontokat generálhatsz a szakmádhoz.</p>
 
         <div class="appointment-form provider-grid">
             <article class="service-card">
@@ -42,6 +38,14 @@
                         <label for="provider-description">Leírás</label>
                         <textarea id="provider-description" name="description" rows="4" placeholder="Mutasd be röviden a szolgáltatásodat"></textarea>
                     </div>
+                    <div class="form-group">
+                        <label for="provider-price">Ár (Ft)</label>
+                        <input id="provider-price" name="price" type="number" min="1" step="1" placeholder="Pl. 8500" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-duration">Időtartam (perc)</label>
+                        <input id="provider-duration" name="duration_minutes" type="number" min="5" step="5" placeholder="Pl. 30" required>
+                    </div>
                     <button class="btn" type="submit">Profil frissítése</button>
                 </form>
                 <pre id="providerProfileDump" class="provider-dump"></pre>
@@ -50,12 +54,6 @@
             <article class="service-card">
                 <h3>Időpontok generálása</h3>
                 <form id="generateAppointmentsForm">
-                    <div class="form-group">
-                        <label for="providerServiceSelect">Szakma / szolgáltatás</label>
-                        <select id="providerServiceSelect" name="service_id" required>
-                            <option value="">Betöltés...</option>
-                        </select>
-                    </div>
                     <div class="form-group">
                         <label for="provider-start">Kezdés</label>
                         <input id="provider-start" name="start_time" type="datetime-local" required>
@@ -66,6 +64,11 @@
                     </div>
                     <button class="btn btn-success" type="submit">Időpontok generálása</button>
                 </form>
+                <div id="generationResult" class="provider-dump" style="margin-top: 0.8rem;">
+                    <p><strong>Generált időpontok:</strong> <span id="generatedCount">-</span></p>
+                    <p><strong>Ár / időpont:</strong> <span id="generatedPrice">-</span></p>
+                    <p><strong>Intervallum:</strong> <span id="generatedRange">-</span></p>
+                </div>
             </article>
         </div>
 
@@ -73,6 +76,6 @@
     </section>
 </main>
 
-<script src="script.js"></script>
+<script type="module" src="assets/provider.js"></script>
 </body>
 </html>
