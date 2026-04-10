@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bejelentkezés</title>
+    <link rel="icon" type="image/png" href="IMG_3871.PNG">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+        <header> <!-- navigation bar -->
+        <nav>
+            <div class="nav-container">
+                <a href="felhaszfooldal.html"><h1>Időpontfoglaló<img class="brand-logo" src="IMG_3871.PNG" alt="Logo"></h1></a>
+                <div id="nav-links">
+                    <a href="bejelentkezes.html">Bejelentkezés</a> <!-- Login Gomb-->
+                    <a href="regisztracio.html">Regisztráció</a> <!-- Register Gomb-->
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+         <section id="hero-section" class="hero">
+            <div class="auth-container">
+                <div class="auth-form">
+                    <h2>Bejelentkezés</h2>
+                    <form id="login">
+                        <div class="form-group">
+                            <label for="login-email">Email cím</label>
+                            <input id="login-email" type="email" name="email" placeholder="pelda@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login-password">Jelszó</label>
+                            <input id="login-password" type="password" name="password" placeholder="••••••••" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Belépés típusa</label>
+                            <div class="role-options">
+                                <label class="role-option" for="login-role-user">
+                                    <input id="login-role-user" type="radio" name="login_role" value="user" checked>
+                                    Felhasználó
+                                </label>
+                                <label class="role-option" for="login-role-provider">
+                                    <input id="login-role-provider" type="radio" name="login_role" value="provider">
+                                    Szolgáltató
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit">Bejelentkezés</button>
+                    </form>
+                    <p>Nem regisztráltál még? <a href="regisztracio.html">Regisztráció</a></p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

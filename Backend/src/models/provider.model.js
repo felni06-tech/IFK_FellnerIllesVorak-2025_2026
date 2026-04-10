@@ -1,33 +1,38 @@
-import { db } from '../config/db'
+import { db } from '../config/db.js'
 
-const ProviderModel = {
+export const ProviderModel = {
+    getAll: async () => {
+        const [rows] = await db.execute(
+            `SELECT * FROM providers`
+        )
+
+        return rows
+    },
     //Profil frissítése
-    updateProfile: async (userId, data) => {
-        const { address, profession, description } = data
+    updateProfile: async (providerId, data) => {
+        const { address, description } = data
 
-        //Frissítjük a 'providers' táblát az 'user_id' alapján
+        //Frissítjük a 'providers' táblát a 'id' alapján
         const [result] = await db.execute(
             `UPDATE providers
-            SET address = ?, profession = ?, description = ?
-            WHERE user_id = ?`,
-            [address, profession, description, userId]
+            SET address = ?, description = ?
+            WHERE id = ?`,
+            [address, description, providerId]
         )
 
         return result
     },
 
-    //Lekérdezzük a profil összes adatát 'user_id' alapján
-    getProfileByUserId: async (userId) => {
+    //Lekérdezzük a profil összes adatát 'id' alapján
+    getProfileByProviderId: async (providerId, serviceId) => {
         const [rows] = await db.execute(
-            `SELECT u.name, u.email, u.phone, u.profile_picture, provider.*
-            FROM users u
-            JOIN providers p ON u.user_id = p.user_id
-            WHERE u.user_id = ?`,
-            [userId]
+            `SELECT p.*, ps.price, ps.duration_minutes 
+            FROM providers p
+            JOIN provider_services ps ON p.id = ps.provider_id
+            WHERE p.id = ? AND ps.service_id = ?`,
+            [providerId, serviceId]
         )
 
         return rows[0]
     }
 }
-
-export default ProviderModel

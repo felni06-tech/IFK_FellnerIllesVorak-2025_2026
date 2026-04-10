@@ -1,0 +1,869 @@
+const defaultProviders = [
+	{
+		id: 1,
+		name: 'Fodrász Anna',
+		services: ['Női hajvágás', 'Férfi hajvágás', 'Festés'],
+		slots: ['09:00', '10:00', '11:00', '14:00', '15:00']
+	},
+	{
+		id: 2,
+		name: 'Kozmetika Lili',
+		services: ['Arctisztítás', 'Smink', 'Szemöldök formázás'],
+		slots: ['10:30', '11:30', '13:30', '16:00']
+	},
+	{
+		id: 3,
+		name: 'Masszázs Péter',
+		services: ['Svédmasszázs', 'Sportmasszázs', 'Talpmasszázs'],
+		slots: ['08:30', '09:30', '12:00', '17:00']
+	}
+]
+
+let providers = [...defaultProviders]
+
+const API_BASE = 'http://localhost:3000'
+const USER_TOKEN_KEY = 'ifk_user_token'
+const USER_INFO_KEY = 'ifk_user_info'
+const LOGIN_ROLE_MAP_KEY = 'ifk_login_role_map'
+const PROVIDER_DIRECTORY_KEY = 'ifk_provider_directory'
+
+let selectedDate = null
+let selectedTime = null
+
+const bookingStorageKey = 'ifk_bookings'
+const reviewStorageKey = 'ifk_reviews'
+const serviceCatalogStorageKey = 'ifk_service_catalog'
+
+const fallbackServices = [
+	{ id: 1, name: 'Fodraszat' },
+	{ id: 2, name: 'Kozmetika' },
+	{ id: 3, name: 'Masszazs' },
+	{ id: 4, name: 'Manikur' },
+	{ id: 5, name: 'Pedikur' }
+]
+
+async function apiRequest(path, options = {}, token = '') {
+	const headers = {
+		'Content-Type': 'application/json',
+		...(options.headers || {})
+	}
+
+	if (token) {
+		headers.Authorization = `Bearer ${token}`
+	}
+
+	const response = await fetch(`${API_BASE}${path}`, {
+		...options,
+		headers
+	})
+
+	const text = await response.text()
+	const payload = text ? JSON.parse(text) : null
+
+	if (!response.ok) {
+		throw new Error(payload?.message || 'Szerverhiba történt.')
+	}
+
+	return payload
+}
+
+function saveUserToken(token) {
+	localStorage.setItem(USER_TOKEN_KEY, token)
+}
+
+function getUserToken() {
+	return localStorage.getItem(USER_TOKEN_KEY) || ''
+}
+
+function saveUserInfo(user) {
+	localStorage.setItem(USER_INFO_KEY, JSON.stringify(user || {}))
+}
+
+function getUserInfo() {
+	const raw = localStorage.getItem(USER_INFO_KEY)
+	if (!raw) return {}
+	try {
+		return JSON.parse(raw)
+	} catch {
+		return {}
+	}
+}
+
+function logoutUser() {
+	localStorage.removeItem(USER_TOKEN_KEY)
+	localStorage.removeItem(USER_INFO_KEY)
+}
+
+function getStoredLoginRole(email) {
+	const normalizedEmail = String(email || '').trim().toLowerCase()
+	if (!normalizedEmail) return ''
+	try {
+		const raw = JSON.parse(localStorage.getItem(LOGIN_ROLE_MAP_KEY) || '{}')
+		return raw[normalizedEmail] || ''
+	} catch {
+		return ''
+	}
+}
+
+function saveStoredLoginRole(email, role) {
+	const normalizedEmail = String(email || '').trim().toLowerCase()
+	if (!normalizedEmail) return
+	try {
+		const raw = JSON.parse(localStorage.getItem(LOGIN_ROLE_MAP_KEY) || '{}')
+		raw[normalizedEmail] = role
+		localStorage.setItem(LOGIN_ROLE_MAP_KEY, JSON.stringify(raw))
+	} catch {
+		localStorage.setItem(LOGIN_ROLE_MAP_KEY, JSON.stringify({ [normalizedEmail]: role }))
+	}
+}
+
+function loadProviderDirectory() {
+	try {
+		const raw = JSON.parse(localStorage.getItem(PROVIDER_DIRECTORY_KEY) || '[]')
+		return Array.isArray(raw) ? raw : []
+	} catch {
+		return []
+	}
+}
+
+function saveProviderDirectory(entries) {
+	localStorage.setItem(PROVIDER_DIRECTORY_KEY, JSON.stringify(entries))
+}
+
+function upsertRegisteredProvider({ email, name, profession, serviceId }) {
+	const normalizedEmail = String(email || '').trim().toLowerCase()
+	if (!normalizedEmail || !name || !profession) return
+
+	const directory = loadProviderDirectory()
+	const existing = directory.find(entry => String(entry.email || '').toLowerCase() === normalizedEmail)
+
+	if (existing) {
+		existing.name = name
+		existing.profession = profession
+		existing.serviceId = serviceId
+	} else {
+		directory.push({
+			email: normalizedEmail,
+			name,
+			profession,
+			serviceId,
+			uiId: Date.now() + Math.floor(Math.random() * 1000)
+		})
+	}
+
+	saveProviderDirectory(directory)
+}
+
+function mergeProvidersForUI() {
+	const directory = loadProviderDirectory()
+	const dynamicProviders = directory
+		.filter(entry => entry.name && entry.profession)
+		.map(entry => ({
+			id: Number(entry.uiId),
+			name: entry.name,
+			services: [entry.profession],
+			slots: ['09:00', '10:00', '11:00', '14:00', '15:00']
+		}))
+
+	providers = [...defaultProviders, ...dynamicProviders]
+}
+
+function resolveServiceLabelById(serviceId) {
+	const id = Number(serviceId)
+	if (!id) return ''
+
+	const catalogRaw = localStorage.getItem(serviceCatalogStorageKey)
+	if (catalogRaw) {
+		try {
+			const catalog = JSON.parse(catalogRaw)
+			if (Array.isArray(catalog)) {
+				const matched = catalog.find(item => Number(item?.id ?? item?.service_id) === id)
+				if (matched) {
+					return String(matched?.name ?? matched?.service_name ?? '').trim()
+				}
+			}
+		} catch {
+			// fallback listara valtunk
+		}
+	}
+
+	const fallbackMatch = fallbackServices.find(item => Number(item.id) === id)
+	return fallbackMatch ? fallbackMatch.name : `Szolgáltatás #${id}`
+}
+
+function getBookingElements() {
+	return {
+		providerSelect: document.getElementById('providerSelect'),
+		serviceSelect: document.getElementById('serviceSelect'),
+		calendar: document.getElementById('calendar'),
+		timeSlots: document.getElementById('timeSlots'),
+		bookBtn: document.getElementById('bookBtn'),
+		bookingMessage: document.getElementById('bookingMessage'),
+		bookingsList: document.getElementById('bookingsList'),
+		reviewProviderSelect: document.getElementById('reviewProviderSelect'),
+		reviewServiceSelect: document.getElementById('reviewServiceSelect'),
+		reviewRating: document.getElementById('reviewRating'),
+		reviewComment: document.getElementById('reviewComment'),
+		reviewBtn: document.getElementById('reviewBtn'),
+		reviewMessage: document.getElementById('reviewMessage'),
+		reviewsList: document.getElementById('reviewsList')
+	}
+}
+
+function loadBookings() {
+	const raw = localStorage.getItem(bookingStorageKey)
+	return raw ? JSON.parse(raw) : []
+}
+
+function saveBookings(bookings) {
+	localStorage.setItem(bookingStorageKey, JSON.stringify(bookings))
+}
+
+function loadReviews() {
+	const raw = localStorage.getItem(reviewStorageKey)
+	return raw ? JSON.parse(raw) : []
+}
+
+function saveReviews(reviews) {
+	localStorage.setItem(reviewStorageKey, JSON.stringify(reviews))
+}
+
+function formatDate(date) {
+	return date.toLocaleDateString('hu-HU', {
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit'
+	})
+}
+
+function getDateKey(date) {
+	return date.toISOString().split('T')[0]
+}
+
+async function getServices() {
+	const raw = localStorage.getItem(serviceCatalogStorageKey)
+	if (raw) {
+		try {
+			const parsed = JSON.parse(raw)
+			if (Array.isArray(parsed) && parsed.length) {
+				return parsed
+			}
+		} catch {
+			// Fallback listara valtunk, ha a cache serult.
+		}
+	}
+
+	return fallbackServices
+}
+
+function renderServiceSelect(select, services, placeholder = 'Válassz...') {
+	if (!select) return
+
+	if (!services.length) {
+		select.innerHTML = '<option value="">Nincs elérhető szolgáltatás</option>'
+		return
+	}
+
+	select.innerHTML = [`<option value="">${placeholder}</option>`]
+		.concat(services.map(service => `<option value="${service.service_id ?? service.id}">${service.service_name ?? service.name}</option>`))
+		.join('')
+}
+
+function renderProviderOptions(elements) {
+	elements.providerSelect.innerHTML = providers
+		.map(provider => `<option value="${provider.id}">${provider.name}</option>`)
+		.join('')
+}
+
+function getSelectedProvider(elements) {
+	const providerId = Number(elements.providerSelect.value)
+	return providers.find(provider => provider.id === providerId)
+}
+
+function renderServiceOptions(elements) {
+	const provider = getSelectedProvider(elements)
+	if (!provider) {
+		elements.serviceSelect.innerHTML = ''
+		return
+	}
+
+	elements.serviceSelect.innerHTML = provider.services
+		.map(service => `<option value="${service}">${service}</option>`)
+		.join('')
+}
+
+function renderCalendar(elements) {
+	elements.calendar.innerHTML = ''
+	const now = new Date()
+
+	for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+		const date = new Date(now)
+		date.setDate(now.getDate() + dayOffset)
+
+		const dayButton = document.createElement('button')
+		dayButton.type = 'button'
+		dayButton.className = 'calendar-day available'
+		dayButton.textContent = formatDate(date)
+		dayButton.dataset.date = getDateKey(date)
+
+		if (selectedDate === dayButton.dataset.date) {
+			dayButton.classList.add('selected')
+		}
+
+		dayButton.addEventListener('click', () => {
+			selectedDate = dayButton.dataset.date
+			selectedTime = null
+			renderCalendar(elements)
+			renderTimeSlots(elements)
+			setBookingMessage(elements, '')
+		})
+
+		elements.calendar.appendChild(dayButton)
+	}
+}
+
+function renderTimeSlots(elements) {
+	const provider = getSelectedProvider(elements)
+	elements.timeSlots.innerHTML = ''
+
+	if (!provider || !selectedDate) {
+		elements.timeSlots.innerHTML = '<p>Először válassz napot.</p>'
+		return
+	}
+
+	provider.slots.forEach(slot => {
+		const slotButton = document.createElement('button')
+		slotButton.type = 'button'
+		slotButton.className = 'time-slot available'
+		slotButton.textContent = slot
+		slotButton.dataset.time = slot
+
+		if (selectedTime === slot) {
+			slotButton.classList.add('selected')
+		}
+
+		slotButton.addEventListener('click', () => {
+			selectedTime = slot
+			renderTimeSlots(elements)
+			setBookingMessage(elements, '')
+		})
+
+		elements.timeSlots.appendChild(slotButton)
+	})
+}
+
+function setBookingMessage(elements, message, isError = false) {
+	elements.bookingMessage.textContent = message
+	elements.bookingMessage.style.color = isError ? '#dc3545' : '#155724'
+}
+
+function renderBookings(elements) {
+	const bookings = loadBookings()
+
+	if (bookings.length === 0) {
+		elements.bookingsList.innerHTML = '<p>Még nincs foglalásod.</p>'
+		return
+	}
+
+	elements.bookingsList.innerHTML = bookings
+		.map(booking => `
+			<article class="service-card">
+				<h3>${booking.providerName}</h3>
+				<p><strong>Szolgáltatás:</strong> ${booking.service}</p>
+				<p><strong>Dátum:</strong> ${booking.date}</p>
+				<p><strong>Időpont:</strong> ${booking.time}</p>
+			</article>
+		`)
+		.join('')
+}
+
+function renderReviewProviderOptions(elements) {
+	elements.reviewProviderSelect.innerHTML = providers
+		.map(provider => `<option value="${provider.id}">${provider.name}</option>`)
+		.join('')
+}
+
+function getSelectedReviewProvider(elements) {
+	const providerId = Number(elements.reviewProviderSelect.value)
+	return providers.find(provider => provider.id === providerId)
+}
+
+function renderReviewServiceOptions(elements) {
+	const provider = getSelectedReviewProvider(elements)
+	if (!provider) {
+		elements.reviewServiceSelect.innerHTML = ''
+		return
+	}
+
+	elements.reviewServiceSelect.innerHTML = provider.services
+		.map(service => `<option value="${service}">${service}</option>`)
+		.join('')
+}
+
+function setReviewMessage(elements, message) {
+	elements.reviewMessage.textContent = message
+}
+
+function renderReviews(elements) {
+	const reviews = loadReviews()
+
+	if (reviews.length === 0) {
+		elements.reviewsList.innerHTML = '<p>Még nincs értékelés.</p>'
+		return
+	}
+
+	elements.reviewsList.innerHTML = reviews
+		.slice()
+		.reverse()
+		.map(review => `
+			<article class="review">
+				<div class="rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+				<p><strong>${review.providerName}</strong> - ${review.service}</p>
+				<p>${review.comment}</p>
+			</article>
+		`)
+		.join('')
+}
+
+function handleReview(elements) {
+	const provider = getSelectedReviewProvider(elements)
+	const service = elements.reviewServiceSelect.value
+	const rating = Number(elements.reviewRating.value)
+	const comment = elements.reviewComment.value.trim()
+
+	if (!provider || !service || !rating || !comment) {
+		setReviewMessage(elements, 'Kérlek tölts ki minden mezőt az értékeléshez.')
+		return
+	}
+
+	const reviews = loadReviews()
+	reviews.push({
+		providerId: provider.id,
+		providerName: provider.name,
+		service,
+		rating,
+		comment,
+		createdAt: new Date().toISOString()
+	})
+
+	saveReviews(reviews)
+	elements.reviewComment.value = ''
+	setReviewMessage(elements, 'Köszönjük az értékelést!')
+	renderReviews(elements)
+}
+
+function handleBooking(elements) {
+	const provider = getSelectedProvider(elements)
+	const service = elements.serviceSelect.value
+
+	if (!provider || !service || !selectedDate || !selectedTime) {
+		setBookingMessage(elements, 'Kérlek válassz szolgáltatót, szolgáltatást, napot és időpontot.', true)
+		return
+	}
+
+	const bookings = loadBookings()
+	const alreadyBooked = bookings.some(
+		booking => booking.providerId === provider.id && booking.dateKey === selectedDate && booking.time === selectedTime
+	)
+
+	if (alreadyBooked) {
+		setBookingMessage(elements, 'Ez az időpont már foglalt. Válassz másikat.', true)
+		return
+	}
+
+	const booking = {
+		providerId: provider.id,
+		providerName: provider.name,
+		service,
+		dateKey: selectedDate,
+		date: new Date(selectedDate).toLocaleDateString('hu-HU'),
+		time: selectedTime
+	}
+
+	bookings.push(booking)
+	saveBookings(bookings)
+	renderBookings(elements)
+	setBookingMessage(elements, 'Sikeres foglalás!')
+}
+
+function initLogoutLink() {
+	const logoutLink = document.getElementById('logoutLink')
+	if (!logoutLink) {
+		return
+	}
+
+	logoutLink.addEventListener('click', async event => {
+		event.preventDefault()
+		try {
+			await apiRequest('/api/auth/logout', { method: 'POST' })
+		} catch {
+			// Kliens oldali kijelentkezés akkor is lefut, ha a szerver logout hibára fut.
+		}
+		logoutUser()
+		window.location.href = 'bejelentkezes.html'
+	})
+}
+
+function initBookingPage() {
+	const elements = getBookingElements()
+
+	if (!elements.providerSelect || !elements.serviceSelect || !elements.calendar || !elements.timeSlots || !elements.bookBtn) {
+		return
+	}
+
+	if (!getUserToken()) {
+		window.location.href = 'bejelentkezes.html'
+		return
+	}
+
+	mergeProvidersForUI()
+
+	renderProviderOptions(elements)
+	renderServiceOptions(elements)
+	renderCalendar(elements)
+	renderTimeSlots(elements)
+	renderBookings(elements)
+
+	if (elements.reviewProviderSelect && elements.reviewServiceSelect && elements.reviewBtn && elements.reviewsList) {
+		renderReviewProviderOptions(elements)
+		renderReviewServiceOptions(elements)
+		renderReviews(elements)
+
+		elements.reviewProviderSelect.addEventListener('change', () => {
+			renderReviewServiceOptions(elements)
+			setReviewMessage(elements, '')
+		})
+
+		elements.reviewBtn.addEventListener('click', () => {
+			handleReview(elements)
+		})
+	}
+
+	elements.providerSelect.addEventListener('change', () => {
+		renderServiceOptions(elements)
+		selectedTime = null
+		renderTimeSlots(elements)
+		setBookingMessage(elements, '')
+	})
+
+	elements.bookBtn.addEventListener('click', () => {
+		handleBooking(elements)
+	})
+}
+
+function initLoginPage() {
+	const form = document.getElementById('login')
+	if (!form) {
+		return
+	}
+
+	const emailInput = document.getElementById('login-email')
+	const roleInputs = Array.from(document.querySelectorAll('input[name="login_role"]'))
+
+	const syncStoredLoginRole = () => {
+		const storedRole = getStoredLoginRole(emailInput?.value || '')
+		if (!storedRole) return
+		const matchingInput = roleInputs.find(input => input.value === storedRole)
+		if (matchingInput) {
+			matchingInput.checked = true
+		}
+	}
+
+	emailInput?.addEventListener('input', syncStoredLoginRole)
+	syncStoredLoginRole()
+
+	form.addEventListener('submit', async event => {
+		event.preventDefault()
+
+		const formData = new FormData(form)
+		const email = String(formData.get('email') || '').trim()
+		const password = String(formData.get('password') || '')
+		const selectedLoginRole = String(formData.get('login_role') || 'user')
+
+		try {
+			const result = await apiRequest('/api/auth/login', {
+				method: 'POST',
+				body: JSON.stringify({ email, password })
+			})
+
+			saveUserToken(result.token)
+			saveUserInfo(result.user)
+			saveStoredLoginRole(email, selectedLoginRole)
+
+			const isProviderAccount = Boolean(result?.user?.isProvider)
+			if (isProviderAccount) {
+				upsertRegisteredProvider({
+					email,
+					name: result?.user?.name || email,
+					profession: resolveServiceLabelById(result?.user?.serviceId),
+					serviceId: Number(result?.user?.serviceId || 0)
+				})
+			}
+
+			if (isProviderAccount || selectedLoginRole === 'provider') {
+				window.location.href = 'szolgaltato.html'
+				return
+			}
+
+			window.location.href = 'felhaszfooldal.html'
+		} catch (error) {
+			alert(error.message)
+		}
+	})
+}
+
+function initRegisterPage() {
+	const form = document.getElementById('register')
+	if (!form) {
+		return
+	}
+
+	const roleInputs = Array.from(document.querySelectorAll('input[name="role"]'))
+	const serviceIdGroup = document.getElementById('service-id-group')
+	const serviceIdInput = document.getElementById('register-service-id')
+	const serviceIdManualInput = document.getElementById('register-service-id-manual')
+	const serviceFallbackHint = document.getElementById('register-service-fallback-hint')
+	let hasServiceList = true
+
+	const updateServiceInputsByMode = isProvider => {
+		if (serviceIdInput) {
+			serviceIdInput.disabled = !hasServiceList
+			serviceIdInput.required = isProvider && hasServiceList
+		}
+		if (serviceIdManualInput) {
+			serviceIdManualInput.style.display = hasServiceList ? 'none' : 'block'
+			serviceIdManualInput.required = isProvider && !hasServiceList
+		}
+		if (serviceFallbackHint) {
+			serviceFallbackHint.style.display = hasServiceList ? 'none' : 'block'
+		}
+	}
+
+	const syncRoleFields = () => {
+		const selectedRole = roleInputs.find(input => input.checked)?.value || 'user'
+		const isProvider = selectedRole === 'provider'
+		if (serviceIdGroup) {
+			serviceIdGroup.style.display = isProvider ? 'block' : 'none'
+		}
+		updateServiceInputsByMode(isProvider)
+	}
+
+	getServices().then(services => {
+		hasServiceList = services.length > 0
+		renderServiceSelect(serviceIdInput, services, 'Válassz szakmát')
+		syncRoleFields()
+	})
+
+	roleInputs.forEach(input => input.addEventListener('change', syncRoleFields))
+	syncRoleFields()
+
+	const registerMessage = document.getElementById('register-message')
+
+	const showRegisterMessage = (message, isError = false) => {
+		if (!registerMessage) return
+		registerMessage.textContent = message
+		registerMessage.style.display = 'block'
+		registerMessage.style.backgroundColor = isError ? 'rgba(220, 53, 69, 0.1)' : 'rgba(40, 167, 69, 0.1)'
+		registerMessage.style.color = isError ? '#dc3545' : '#155724'
+		registerMessage.style.borderLeft = isError ? '4px solid #dc3545' : '4px solid #28a745'
+	}
+
+	form.addEventListener('submit', async event => {
+		event.preventDefault()
+
+		const formData = new FormData(form)
+		const role = String(formData.get('role') || 'user')
+		const body = {
+			name: String(formData.get('name') || '').trim(),
+			email: String(formData.get('email') || '').trim(),
+			password: String(formData.get('password') || ''),
+			phone: String(formData.get('phone') || '').trim(),
+			isProvider: role === 'provider'
+		}
+
+		const serviceIdValue = hasServiceList
+			? String(formData.get('service_id') || '').trim()
+			: String(serviceIdManualInput?.value || '').trim()
+		const serviceLabel = hasServiceList
+			? String(serviceIdInput?.selectedOptions?.[0]?.textContent || '').trim()
+			: `Szolgáltatás #${serviceIdValue}`
+		if (body.isProvider && serviceIdValue) {
+			body.service_id = Number(serviceIdValue)
+		}
+
+		try {
+			const result = await apiRequest('/api/auth/register', {
+				method: 'POST',
+				body: JSON.stringify(body)
+			})
+
+			if (body.isProvider) {
+				const providerEmails = JSON.parse(localStorage.getItem('ifk_provider_emails') || '[]')
+				providerEmails.push(body.email)
+				localStorage.setItem('ifk_provider_emails', JSON.stringify([...new Set(providerEmails)]))
+				saveStoredLoginRole(body.email, 'provider')
+				upsertRegisteredProvider({
+					email: body.email,
+					name: body.name,
+					profession: serviceLabel || `Szolgáltatás #${serviceIdValue}`,
+					serviceId: Number(serviceIdValue || 0)
+				})
+			}
+			showRegisterMessage(result.message || 'Sikeres regisztráció! Átirányítás...', false)
+			setTimeout(() => {
+				window.location.href = 'bejelentkezes.html'
+			}, 1500)
+		} catch (error) {
+			console.error('[Register Error]', error)
+			showRegisterMessage(error.message || 'Hiba történt a regisztráció során.', true)
+		}
+	})
+}
+
+function toSqlDateTime(localDateTime) {
+	if (!localDateTime) return ''
+	return `${localDateTime.replace('T', ' ')}:00`
+}
+
+function setProviderMessage(message, isError = false) {
+	const box = document.getElementById('providerMessage')
+	if (!box) return
+	box.textContent = message
+	box.style.color = isError ? '#dc3545' : '#155724'
+}
+
+function parsePositiveNumber(value) {
+	const parsed = Number(value)
+	return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
+function initProviderPage() {
+	const providerPage = document.getElementById('providerPage')
+	if (!providerPage) {
+		return
+	}
+
+	const token = getUserToken()
+	if (!token) {
+		window.location.href = 'bejelentkezes.html'
+		return
+	}
+
+	const user = getUserInfo()
+	if (user?.isProvider !== true) {
+		setProviderMessage('Ez az oldal csak szolgáltatói fiókkal érhető el.', true)
+	}
+
+	const loadProfileBtn = document.getElementById('loadProfileBtn')
+	const updateProfileForm = document.getElementById('updateProfileForm')
+	const generateForm = document.getElementById('generateAppointmentsForm')
+	const profileDump = document.getElementById('providerProfileDump')
+
+	const loadProfile = async () => {
+		const profile = await apiRequest('/api/provider/me', {}, token)
+		const addressInput = document.getElementById('provider-address')
+		const descriptionInput = document.getElementById('provider-description')
+		const priceInput = document.getElementById('provider-price')
+		const durationInput = document.getElementById('provider-duration')
+
+		if (addressInput) addressInput.value = profile.address || ''
+		if (descriptionInput) descriptionInput.value = profile.description || ''
+		if (priceInput) priceInput.value = profile.price ?? ''
+		if (durationInput) durationInput.value = profile.duration_minutes ?? ''
+		if (profileDump) profileDump.textContent = JSON.stringify(profile, null, 2)
+
+		return profile
+	}
+
+	loadProfileBtn?.addEventListener('click', async () => {
+		try {
+			await loadProfile()
+			setProviderMessage('Profil sikeresen betöltve.')
+		} catch (error) {
+			setProviderMessage(error.message, true)
+		}
+	})
+
+	updateProfileForm?.addEventListener('submit', async event => {
+		event.preventDefault()
+		const formData = new FormData(updateProfileForm)
+		const address = String(formData.get('address') || '').trim()
+		const description = String(formData.get('description') || '').trim()
+		const price = parsePositiveNumber(formData.get('price'))
+		const durationMinutes = parsePositiveNumber(formData.get('duration_minutes'))
+
+		if (!address || !price || !durationMinutes) {
+			setProviderMessage('A cím, ár és időtartam kitöltése kötelező.', true)
+			return
+		}
+
+		try {
+			const result = await apiRequest(
+				'/api/provider/update',
+				{
+					method: 'POST',
+					body: JSON.stringify({
+						address,
+						description,
+						price,
+						duration_minutes: durationMinutes
+					})
+				},
+				token
+			)
+			setProviderMessage(result.message || 'Profil frissítve.')
+			await loadProfile()
+		} catch (error) {
+			setProviderMessage(error.message, true)
+		}
+	})
+
+	generateForm?.addEventListener('submit', async event => {
+		event.preventDefault()
+		const formData = new FormData(generateForm)
+		const start = toSqlDateTime(String(formData.get('start_time') || ''))
+		const end = toSqlDateTime(String(formData.get('end_time') || ''))
+
+		if (!start || !end || new Date(start) >= new Date(end)) {
+			setProviderMessage('A kezdés időpontja legyen korábbi, mint a befejezés.', true)
+			return
+		}
+
+		try {
+			const profile = await loadProfile()
+			const duration = parsePositiveNumber(profile?.duration_minutes)
+			if (!duration) {
+				setProviderMessage('Időpont generálás előtt add meg a profilnál az időtartamot.', true)
+				return
+			}
+
+			const result = await apiRequest(
+				'/api/appointments/generate',
+				{
+					method: 'POST',
+					body: JSON.stringify({
+						start_time: start,
+						end_time: end
+					})
+				},
+				token
+			)
+
+			setProviderMessage(result.message || 'Időpontok legenerálva.')
+		} catch (error) {
+			setProviderMessage(error.message, true)
+		}
+	})
+
+	loadProfile().catch(() => {
+		setProviderMessage('Profil automatikus betöltése nem sikerült, kattints a Profil betöltése gombra.', true)
+	})
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+	initBookingPage()
+	initLoginPage()
+	initRegisterPage()
+	initProviderPage()
+	initLogoutLink()
+})

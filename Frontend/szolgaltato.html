@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Szolgáltatói felület</title>
+    <link rel="icon" type="image/png" href="IMG_3871.PNG">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <nav>
+        <div class="nav-container">
+            <a href="felhaszfooldal.html"><h1>Időpontfoglaló<img class="brand-logo" src="IMG_3871.PNG" alt="Logo"></h1></a>
+            <div id="nav-links">
+                <a href="#" id="logoutLink">Kijelentkezés</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main id="providerPage">
+    <section id="provider-content">
+        <h2>Szolgáltatói kezelő</h2>
+
+        <div class="appointment-form provider-grid">
+            <article class="service-card">
+                <h3>Profil adatai</h3>
+                <div class="row-actions">
+                    <button id="loadProfileBtn" class="btn" type="button">Profil betöltése</button>
+                </div>
+                <form id="updateProfileForm">
+                    <div class="form-group">
+                        <label for="provider-address">Cím</label>
+                        <input id="provider-address" name="address" placeholder="Pl. Budapest, Példa utca 12." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-description">Leírás</label>
+                        <textarea id="provider-description" name="description" rows="4" placeholder="Mutasd be röviden a szolgáltatásodat"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-price">Ár (Ft)</label>
+                        <input id="provider-price" name="price" type="number" min="1" step="1" placeholder="Pl. 8500" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-duration">Időtartam (perc)</label>
+                        <input id="provider-duration" name="duration_minutes" type="number" min="5" step="5" placeholder="Pl. 30" required>
+                    </div>
+                    <button class="btn" type="submit">Profil frissítése</button>
+                </form>
+                <pre id="providerProfileDump" class="provider-dump"></pre>
+            </article>
+
+            <article class="service-card">
+                <h3>Időpontok generálása</h3>
+                <form id="generateAppointmentsForm">
+                    <div class="form-group">
+                        <label for="provider-start">Kezdés</label>
+                        <input id="provider-start" name="start_time" type="datetime-local" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="provider-end">Befejezés</label>
+                        <input id="provider-end" name="end_time" type="datetime-local" required>
+                    </div>
+                    <button class="btn btn-success" type="submit">Időpontok generálása</button>
+                </form>
+                <div id="generationResult" class="provider-dump" style="margin-top: 0.8rem;">
+                    <p><strong>Generált időpontok:</strong> <span id="generatedCount">-</span></p>
+                    <p><strong>Ár / időpont:</strong> <span id="generatedPrice">-</span></p>
+                    <p><strong>Intervallum:</strong> <span id="generatedRange">-</span></p>
+                </div>
+            </article>
+        </div>
+
+        <p id="providerMessage" class="provider-message"></p>
+    </section>
+</main>
+
+<script type="module" src="assets/provider.js"></script>
+</body>
+</html>
