@@ -1,23 +1,22 @@
-import express from 'express'
-import { verifyToken, isProvider } from '../middlewares/auth.middleware'
+import { Router } from 'express';
+import { bookAppointment, getUserBookings, cancelBooking } from '../controllers/booking.controller.js';
+import { verifyToken } from '../middlewares/auth.middleware.js';
 
-const router = express.Router()
+const router = Router()
 
-//Ez public route, bárki láthatja a szabad időpontokat
-router.get('/available-appointments', (req, res) => {
-    /* --- */
-})
+// Minden foglalással kapcsolatos útvonalhoz kell a bejelentkezés
+router.use(verifyToken)
 
-//Ez egy private route, token verifikáció szükséges (csak bejelentkezett ügyfél foglalhat)
-router.post('/book', verifyToken, (req, res) => {
-    const clientId = req.user.user_id
-    res.json({ message: `Sikeres foglalt a(z) ${clientId} azonosítójú ügyfél.`})
-})
+// Új foglalás létrehozása
+// POST /api/bookings
+router.post('/', bookAppointment)
 
-//Ez egy private route, a tokenen kívűl azt is ellenőrizni kell,
-//hogy a belépett személy Provider-e (csak szolgáltató tölthet fel új időpontokat)
-router.post('/add-schedule', verifyToken, isProvider, (req, res) => {
-    res.json({ message: "Az időpont sikeresen rögzítve a naptárba." })
-})
+// A bejelentkezett felhasználó saját foglalásainak lekérése
+// GET /api/bookings/my-bookings
+router.get('/my-bookings', getUserBookings)
+
+// Foglalás lemondása
+// DELETE vagy PATCH /api/bookings/:id
+router.patch('/:id/cancel', cancelBooking)
 
 export default router

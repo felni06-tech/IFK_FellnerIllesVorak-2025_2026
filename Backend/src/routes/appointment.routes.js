@@ -4,7 +4,10 @@ import { verifyToken, isProvider } from '../middlewares/auth.middleware.js'
 
 const router = express.Router()
 
+router.use(verifyToken)
+router.use(isProvider)
+
 //Időpontok generálása: POST /api/appointments/generate
-router.post('/generate', verifyToken, isProvider, generateAppointments)
+router.post('/generate', generateAppointments)
 
 export default router

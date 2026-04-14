@@ -19,13 +19,15 @@ export const AppointmentModel = {
             `SELECT * FROM appointments WHERE id = ? AND status = 'available'`,
             [appointmentId]
         )
+
+        return rows
     },
 
     // Statusz allitas, hogy ne lehessen tobbszor lefoglalni.
-    updateStatus: async (appointmentId, status, connection = db) => {
+    updateStatus: async (userId, appointmentId, status, connection = db) => {
         await connection.execute(
-            `UPDATE appointments SET status = ? WHERE id = ?`,
-            [status, appointmentId]
+            `UPDATE appointments SET user_id = ?, status = ? WHERE id = ?`,
+            [userId, status, appointmentId]
         )
     }
 }
