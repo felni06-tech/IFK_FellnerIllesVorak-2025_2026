@@ -1,6 +1,20 @@
 import { AppointmentModel } from '../models/appointment.model.js'
 import { ProviderServiceModel } from '../models/providerService.model.js'
 
+export const getAvailableAppointments = async (req, res) => {
+    try {
+        const appointments = await AppointmentModel.getAvailable()
+        res.status(200).json({
+            message: "Időpontok lekérdezése sikeres.",
+            appointments
+        })
+    }
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Hiba az időpontok lekérésekor." })
+    }
+}
+
 export const generateAppointments = async (req, res) => {
     try {
         const providerId = req.user.provider_id
