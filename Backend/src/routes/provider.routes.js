@@ -1,11 +1,16 @@
 import express from 'express'
-import { updateMyProfile, getMyProfile } from '../controllers/provider.controller.js'
+import { updateMyProfile, getMyProfile, getMyBookings } from '../controllers/provider.controller.js'
 import { verifyToken, isProvider } from '../middlewares/auth.middleware.js'
 
 const router = express.Router()
 
-router.get('/me', verifyToken, isProvider, getMyProfile)
+router.use(verifyToken)
+router.use(isProvider)
 
-router.post('/update', verifyToken, isProvider, updateMyProfile)
+router.get('/bookings', getMyBookings)
+
+router.get('/me', getMyProfile)
+
+router.post('/update', updateMyProfile)
 
 export default router

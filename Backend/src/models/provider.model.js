@@ -34,5 +34,29 @@ export const ProviderModel = {
         )
 
         return rows[0]
-    }
+    },
+
+    getBookings: async (providerId, connection = db) => {
+        const [rows] = await connection.execute(
+            `SELECT
+                b.id AS booking_id,
+                b.status AS booking_status,
+                b.date AS booking_made_at,
+                a.start_at,
+                a.end_at,
+                s.name AS service_name,
+                u.name AS customer_name,
+                u.email AS customer_email
+            FROM bookings b
+            JOIN appointments a ON b.appointment_id = a.id
+            JOIN provider_services ps ON a.provider_service_id = ps.id
+            JOIN services s ON ps.service_id = s.id
+            JOIN users u ON b.user_id = u.id
+            WHERE ps.provider_id = ?
+            ORDER BY a.start_at DESC`,
+            [providerId]
+        )
+
+        return rows
+    },
 }
