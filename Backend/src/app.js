@@ -7,6 +7,7 @@ import adminRoutes from './routes/admin.routes.js'
 import providerRoutes from './routes/provider.routes.js'
 import appointmentRoutes from './routes/appointment.routes.js'
 import bookingRoutes from './routes/booking.routes.js'
+import reviewRoutes from './routes/review.routes.js'
 
 
 dotenv.config()
@@ -26,7 +27,7 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/provider', providerRoutes)
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/bookings', bookingRoutes)
-
+app.use('/api/reviews', reviewRoutes)
 
 app.use((req,res) => {
     res.status(404).json({ message: "Az útvonal nem található." })
