@@ -28,7 +28,7 @@ export const BookingModel = {
             JOIN services s ON ps.service_id = s.id
             JOIN providers p ON ps.provider_id = p.id
             JOIN users u ON u.provider_id = p.id
-            WHERE b.user_id = ?
+            WHERE b.user_id = ? AND b.status != 'cancelled'
             ORDER BY a.start_at DESC`,
             [userId]
         )
