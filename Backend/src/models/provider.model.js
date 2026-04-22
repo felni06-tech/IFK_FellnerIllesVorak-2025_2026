@@ -59,4 +59,25 @@ export const ProviderModel = {
 
         return rows
     },
+
+    getReviews: async (providerId, connection = db) => {
+        const [rows] = await connection.execute(
+            `SELECT
+                r.id AS review_id,
+                r.rating,
+                r.comment,
+                r.created_at,
+                u.name AS customer_name,
+                s.name AS service_name
+            FROM reviews r
+            JOIN provider_services ps ON r.provider_service_id = ps.id
+            JOIN services s ON ps.service_id = s.id
+            JOIN users u ON r.user_id = u.id
+            WHERE ps.provider_id = ?
+            ORDER BY r.created_at DESC`,
+            [providerId]
+        )
+
+        return rows
+    }
 }

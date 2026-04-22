@@ -24,6 +24,8 @@ export const addReview = async (req, res) => {
             comment: comment || null
         })
 
+        await ReviewModel.updateProviderAverageRating(providerId)
+
         res.status(200).json({ message: "Értékelés sikeresen rögzítve.", reviewId })
     }
     catch (error) {

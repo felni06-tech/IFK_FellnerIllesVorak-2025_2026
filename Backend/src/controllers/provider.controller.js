@@ -73,3 +73,20 @@ export const getMyBookings = async (req, res) => {
         res.status(500).json({ message: "Hiba a foglalások lekérdezésekor." })
     }
 }
+
+export const getMyReviews = async (req, res) => {
+    try {
+        const providerId = req.user.provider_id
+
+        const reviews = await ProviderModel.getReviews(providerId)
+
+        res.status(200).json({
+            message: "Vélemények sikeresen lekérdezve.",
+            reviews
+        })
+    }
+    catch (error) {
+        console.error(error)
+        res.status(500).json({ message: "Hiba a vélemények lekérdezésekor." })
+    }
+}

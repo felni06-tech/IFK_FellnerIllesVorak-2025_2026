@@ -11,5 +11,19 @@ export const ReviewModel = {
         )
 
         return result.insertId
+    },
+
+    updateProviderAverageRating: async (providerId, connection = db) => {
+        await connection.execute(
+            `UPDATE providers
+            SET avg_rating = (
+                SELECT avg(r.rating)
+                FROM reviews r
+                JOIN provider_services ps ON r.provider_service_id = ps.id
+                WHERE ps.provider_id = ?
+            )
+            WHERE id = ?`,
+            [providerId, providerId]
+        )
     }
 }
