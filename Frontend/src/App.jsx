@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Login from './pages/Login';
-import './App.css'; // Megtarthatod a stílusokat, ha szeretnéd
+import Register from './pages/Register';
+import './App.css';
 
 function App() {
   const isLoggedIn = !!localStorage.getItem('token');
@@ -10,7 +11,7 @@ function App() {
     window.location.href = '/'
   }
 
-return (
+  return (
     <Router>
       <nav className="navbar navbar-expand navbar-dark bg-dark px-3">
         <div className="container-fluid">
@@ -18,7 +19,10 @@ return (
             <Link className="nav-link" to="/">Főoldal</Link>
             
             {!isLoggedIn ? (
-              <Link className="nav-link ms-auto" to="/login">Bejelentkezés</Link>
+              <div className="ms-auto d-flex"> {/* 2. Konténer a két linknek */}
+                <Link className="nav-link" to="/login">Bejelentkezés</Link>
+                <Link className="nav-link" to="/register">Regisztráció</Link>
+              </div>
             ) : (
               <button 
                 className="nav-link btn btn-link ms-auto text-decoration-none" 
@@ -44,6 +48,7 @@ return (
             </div>
           } />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} /> {/* 3. Útvonal hozzáadása */}
         </Routes>
       </div>
     </Router>

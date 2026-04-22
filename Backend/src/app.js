@@ -4,6 +4,7 @@ import cors from 'cors'
 
 //Útvonalak importálása
 import authRoutes from './routes/auth.routes.js'
+import serviceRoutes from './routes/service.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import providerRoutes from './routes/provider.routes.js'
 import appointmentRoutes from './routes/appointment.routes.js'
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 
 //Útvonalak
 app.use('/api/auth', authRoutes)
+app.use('/api/services', serviceRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/provider', providerRoutes)
 app.use('/api/appointments', appointmentRoutes)
