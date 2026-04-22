@@ -53,6 +53,7 @@ export const ProviderModel = {
             JOIN services s ON ps.service_id = s.id
             JOIN users u ON b.user_id = u.id
             WHERE ps.provider_id = ?
+            AND b.status != 'cancelled'
             ORDER BY a.start_at DESC`,
             [providerId]
         )
