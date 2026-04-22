@@ -1,5 +1,6 @@
 import express from 'express'
 import dotenv from 'dotenv'
+import cors from 'cors'
 
 //Útvonalak importálása
 import authRoutes from './routes/auth.routes.js'
@@ -15,6 +16,7 @@ dotenv.config()
 const app = express()
 
 //Middleware-ek
+app.use(cors())
 app.use(express.json())
 app.use((req, res, next) => {
     console.log(`Beérkező kérés: ${req.method} ${req.url}`);
