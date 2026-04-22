@@ -78,7 +78,7 @@ export const cancelBooking = async (req, res) => {
             [bookingId]
         )
 
-        await AppointmentModel.updateStatus(NULL, booking.appointment_id, 'available', connection)
+        await AppointmentModel.updateStatus(null, booking.appointment_id, 'available', connection)
 
         await connection.commit()
 
