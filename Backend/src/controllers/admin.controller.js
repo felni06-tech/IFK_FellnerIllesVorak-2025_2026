@@ -87,7 +87,7 @@ export const createNewAdmin = async (req, res) => {
 
         const password_hash = await bcrypt.hash(password, 10)
 
-        await db.execute(
+        const result = await db.execute(
             `INSERT INTO admins (name, email, phone, password_hash)
             VALUES (?, ?, ?, ?)`,
             [name, email, phone, password_hash]

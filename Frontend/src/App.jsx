@@ -1,6 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 
 function App() {
@@ -48,7 +50,12 @@ function App() {
             </div>
           } />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} /> {/* 3. Útvonal hozzáadása */}
+          <Route path="/register" element={<Register />} />
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route 
+              path="/admin/dashboard" 
+              element={localStorage.getItem('isAdmin') === 'true' ? <AdminDashboard /> : <Navigate to="/admin" />} 
+          />
         </Routes>
       </div>
     </Router>
