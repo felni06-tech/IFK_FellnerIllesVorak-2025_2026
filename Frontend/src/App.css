@@ -1,61 +1,155 @@
-/* NAVBAR KÉNYSZERÍTETT EGY SOR */
+/* Színváltozók - Világosabb kék paletta */
+:root {
+  --deep-bg: #2a65a0;         /* Jelentősen világosabb középkék */
+  --primary-blue: #0094ff;    
+  --accent-blue: #e0f0ff;     /* Nagyon világos kék a kontraszt kedvéért */
+  --soft-blue: #ffffff;       /* Tiszta fehér a jobb olvashatóságért */
+  --white: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.15); /* Világosabb "üveg" kitöltés */
+  --glass-border: rgba(255, 255, 255, 0.4); /* Fehéresebb keretek */
+}
+
+body {
+  background-color: var(--deep-bg);
+  /* Világosabb gradiens, több fehér fénnyel */
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(0, 148, 255, 0.4) 0%, transparent 50%),
+    linear-gradient(135deg, #2a65a0 0%, #4a90e2 100%); 
+  min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  color: var(--white);
+  margin: 0;
+}
+
+/* NAVBAR */
+.navbar {
+    background: rgba(42, 101, 160, 0.85) !important; /* Háttérhez igazított navbar */
+    backdrop-filter: blur(15px) saturate(160%);
+    -webkit-backdrop-filter: blur(15px) saturate(160%);
+    border-bottom: 1px solid var(--glass-border) !important;
+    padding: 0.8rem 1rem !important;
+}
+
+/* Megtartottuk a szerkezetet, csak a színeket frissítettük */
 .navbar .container-fluid {
     display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important; /* Tiltja az új sorba törést */
+    flex-wrap: nowrap !important;
     justify-content: space-between;
     align-items: center;
 }
 
-/* A gombokat tartalmazó blokkok is maradjanak egy sorban */
 .nav-group {
     display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
+    gap: 12px;
     align-items: center;
 }
 
-/* Gomb stílus (borderrel és távolsággal) */
+/* Navigációs Gombok */
 .nav-btn {
-    display: inline-block;
-    color: white !important;
+    display: inline-flex;
+    align-items: center;
+    color: var(--white) !important; /* Fehér szöveg a kék háttéren */
     text-decoration: none;
-    padding: 8px 15px;
-    margin: 0 8px; /* Távolság a gombok között */
-    border: 1px solid rgba(255, 255, 255, 0.4); /* Látható keret */
-    border-radius: 6px;
-    font-size: 0.9rem;
-    white-space: nowrap; /* A gomb szövege ne törjön több sorba */
-    transition: all 0.2s;
+    padding: 8px 20px;
+    border: 1px solid var(--glass-border);
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-btn:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: white;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: var(--white);
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Felhasználó neve */
+/* Aktív / Kiemelt gomb (pl. Home vagy aktív menüpont) */
+.nav-btn-highlight {
+    background: var(--white) !important;
+    color: var(--deep-bg) !important; /* Alapból sötét szöveg a fehér háttéren */
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* JAVÍTÁS: Kiemelt gomb hover állapota */
+.nav-btn-highlight:hover {
+    /* Hoverkor a gomb kap egy kék hátteret, a szöveg pedig fehér lesz */
+    background: var(--primary-blue) !important; 
+    color: var(--white) !important;           /* Így biztosan látszódni fog a text */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 148, 255, 0.4);
+}
+
+/* Felhasználó Infó */
 .user-info-text {
-    color: white;
+    color: var(--white);
     padding: 0 15px;
-    border-right: 1px solid rgba(255, 255, 255, 0.2);
-    margin-right: 10px;
-    white-space: nowrap;
+    font-size: 0.9rem;
+    border-right: 1px solid var(--glass-border);
+    margin-right: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Kijelentkezés gomb */
+.user-info-text strong {
+    color: var(--black);
+}
+
+/* Modern Kijelentkezés */
 .logout-btn {
-    background: transparent;
-    border: 1px solid #ff4d4d;
-    color: #ff4d4d;
-    padding: 7px 15px;
-    border-radius: 6px;
-    font-weight: bold;
-    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #ff9999;
+    color: #ffcccc;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
     background: #ff4d4d;
     color: white;
+    border-color: #ff4d4d;
+    box-shadow: 0 4px 15px rgba(255, 77, 77, 0.4);
+}
+
+/* Glass Panelek */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(25px);
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    padding: 40px;
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.2);
+}
+
+/* Kártyák */
+.card {
+    background: rgba(255, 255, 255, 0.15) !important; /* Világosabb kártyák */
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 20px !important;
+    transition: all 0.4s ease !important;
+    color: white !important;
+}
+
+.card:hover {
+    background: rgba(255, 255, 255, 0.22) !important;
+    border-color: var(--white) !important;
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.text-muted {
+    color: var(--accent-blue) !important;
+    opacity: 0.9;
 }

@@ -108,36 +108,67 @@ function App() {
 }
 
 const Home = ({ isLoggedIn, isAdmin, isProvider, user, isNotStaff }) => (
-  <div className="text-center py-5 mt-5 glass-panel shadow-lg">
-    <h1 className="display-4 fw-bold">Időpontfoglaló</h1>
-    {isLoggedIn ? (
-      <div className="mt-3">
-        <p className="lead">Szia, <strong>{user?.name}</strong>! Örülünk, hogy újra itt vagy.</p>
+  <div className="container content-area">
+    <div className="row justify-content-center">
+      {/* A glass-panel osztály már a modern CSS-ből jön */}
+      <div className="col-md-10 col-lg-8 text-center glass-panel shadow-lg mt-5">
         
-        <div className="d-flex justify-content-center gap-3 mt-4">
-          {isAdmin && (
-            <Link to="/admin/dashboard" className="btn btn-danger btn-lg px-4 shadow">Irány az Admin Panel</Link>
-          )}
+        <h1 className="display-2 mb-4 fw-bold animate-fade-in">
+          <span style={{ color: 'var(--accent-blue)' }}>Időpont</span>
+          <span style={{ color: 'var(--white)' }}>foglaló</span>
+        </h1>
+        
+        {isLoggedIn ? (
+          <div className="mt-4">
+            <p className="lead fs-3 mb-2">
+              Üdvözlünk újra, <span style={{ color: '#214f7e', fontWeight: '700' }}>{user?.name}</span>! 👋
+            </p>
+            <p className="text-muted mb-5">Válassz az alábbi műveletek közül az induláshoz:</p>
+            
+            {/* A nav-group-hoz hasonló gap-alapú elrendezés a gomboknak */}
+            <div className="d-flex justify-content-center gap-3 flex-wrap">
+              {isAdmin && (
+                <Link to="/admin/dashboard" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                  🛡️ Rendszerfelügyelet
+                </Link>
+              )}
 
-          {isProvider && (
-            <Link to="/provider/dashboard" className="btn btn-info btn-lg px-4 shadow text-white">Irány a vezérlőpultom</Link>
-          )}
+              {isProvider && (
+                <Link to="/provider/dashboard" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                  💼 Üzletvezetés
+                </Link>
+              )}
 
-          {/* Vendég/User gombok (Admin és Provider nem látja) */}
-          {isNotStaff && (
-            <>
-              <Link to="/appointments" className="btn btn-primary btn-lg px-4 shadow">Időpontot keresek</Link>
-              <Link to="/my-bookings" className="btn btn-outline-dark btn-lg px-4">Foglalásaim kezelése</Link>
-            </>
-          )}
-        </div>
+              {isNotStaff && (
+                <>
+                  <Link to="/appointments" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                    🚀 Új időpontot foglalok
+                  </Link>
+                  <Link to="/my-bookings" className="nav-btn px-5 py-3 fs-5">
+                    📅 Foglalásaim
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="py-5 mt-2">
+            <p className="lead mb-5 text-light fs-4 mx-auto" style={{ maxWidth: '600px', opacity: 0.9 }}>
+              A legegyszerűbb és leggyorsabb út a szolgáltatásokhoz. 
+              Foglalj időpontot pár kattintással, bárhol, bármikor.
+            </p>
+            <div className="d-flex justify-content-center gap-4 flex-wrap">
+              <Link to="/login" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                Bejelentkezés
+              </Link>
+              <Link to="/register" className="nav-btn px-5 py-3 fs-5">
+                Regisztráció
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
-    ) : (
-      <div>
-        <p className="lead mt-3 text-muted">A funkciók eléréséhez jelentkezz be!</p>
-        <Link to="/login" className="btn btn-dark btn-lg mt-2 px-5">Kezdjünk hozzá</Link>
-      </div>
-    )}
+    </div>
   </div>
 );
 
