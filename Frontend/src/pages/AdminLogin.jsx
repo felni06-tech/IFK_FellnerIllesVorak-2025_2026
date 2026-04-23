@@ -10,7 +10,8 @@ const AdminLogin = () => {
         try {
             const res = await api.post('/admin/login', { email, password });
             localStorage.setItem('token', res.data.token);
-            localStorage.setItem('isAdmin', 'true'); // Jelöljük, hogy admin
+            localStorage.setItem('isAdmin', 'true');
+            localStorage.setItem('admin', JSON.stringify(res.data.admin))
             window.location.href = '/admin/dashboard';
         } catch (err) {
             alert('Hiba: ' + (err.response?.data?.message || 'Sikertelen admin belépés'));

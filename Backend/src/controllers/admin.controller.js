@@ -21,6 +21,7 @@ export const adminLogin = async (req, res) => {
         const token = jwt.sign(
             {
                 id: admin.id,
+                name: admin.name,
                 email: admin.email,
                 role: 'admin'
             },

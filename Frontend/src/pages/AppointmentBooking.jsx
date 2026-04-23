@@ -28,7 +28,7 @@ const AppointmentBooking = () => {
         if (!window.confirm("Biztosan le szeretnéd foglalni ezt az időpontot?")) return;
 
         try {
-            // A te backend útvonalad: POST /api/bookings
+            // A backend útvonal: POST /api/bookings
             const res = await api.post('/bookings', { appointmentId });
             alert(res.data.message || "Sikeres foglalás!");
             

@@ -12,7 +12,11 @@ function App() {
   const token = localStorage.getItem('token');
   const isLoggedIn = !!token;
   
-  const user = isLoggedIn ? JSON.parse(localStorage.getItem('user')) : null;
+  const savedUser = isLoggedIn ? JSON.parse(localStorage.getItem('user')) : null;
+  const savedAdmin = isLoggedIn ? JSON.parse(localStorage.getItem('admin')) : null;
+
+  const user = savedUser || savedAdmin
+
   const isProvider = user?.isProvider === true;
   const isAdmin = isLoggedIn && localStorage.getItem('isAdmin') === 'true';
 
