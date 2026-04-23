@@ -31,6 +31,48 @@ body {
     padding: 0.8rem 1rem !important;
 }
 
+/* Logó stílusa: Fehér körben */
+.navbar-logo {
+  /* Fix méret, hogy tökéletes kör legyen */
+  height: 45px;
+  width: 45px; /* A szélességnek meg kell egyeznie a magassággal */
+  
+  /* Fehér háttér */
+  background-color: #ffffff;
+  
+  /* Ettől lesz kör alakú */
+  border-radius: 50%;
+  
+  /* padding, hogy a logó ne érjen hozzá a kör széléhez */
+  padding: 5px; 
+  
+  /* Biztosítja, hogy a logó ne torzuljon a körön belül */
+  object-fit: contain; 
+  
+  display: block;
+  
+  /* Opcionális: egy kis árnyék, hogy jobban kiemelkedjen a kékből */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  
+  /* Animáció hoverre */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effekt a körös logóra */
+.navbar-logo:hover {
+  transform: scale(1.1); /* Enyhe nagyítás */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Navbar-brand igazítása, hogy a kör középen legyen */
+.navbar-brand {
+  padding: 0 !important;
+  margin-right: 1.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 /* Megtartottuk a szerkezetet, csak a színeket frissítettük */
 .navbar .container-fluid {
     display: flex !important;
