@@ -21,7 +21,9 @@ export const BookingModel = {
                 a.end_at,
                 s.name AS service_name,
                 u.name AS provider_name,
-                p.address AS provider_address
+                p.address AS provider_address,
+                ps.provider_id,
+                ps.service_id
             FROM bookings b
             JOIN appointments a on b.appointment_id = a.id
             JOIN provider_services ps ON a.provider_service_id = ps.id

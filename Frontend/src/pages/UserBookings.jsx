@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // Behozzuk a Link-et az átirányításhoz
 import api from '../api/axios';
 
 const UserBookings = () => {
@@ -6,7 +7,6 @@ const UserBookings = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // 1. A bejelentkezett felhasználó foglalásainak lekérése
     const fetchMyBookings = async () => {
         try {
             setLoading(true);
@@ -23,14 +23,11 @@ const UserBookings = () => {
         fetchMyBookings();
     }, []);
 
-    // 2. Foglalás lemondása
     const handleCancel = async (bookingId) => {
-        // Ha véletlenül mégis undefined lenne, megállítjuk
         if (!bookingId) {
             alert("Hiba: Nem található a foglalás azonosítója.");
             return;
         }
-
         if (!window.confirm("Biztosan le szeretnéd mondani ezt a foglalást?")) return;
 
         try {
@@ -71,7 +68,6 @@ const UserBookings = () => {
             ) : (
                 <div className="row">
                     {bookings.map((b) => {
-                        // JAVÍTÁS: Próbáljuk a booking_id-t, ha az id undefined
                         const bId = b.booking_id || b.id;
                         const isActive = b.booking_status === 'active';
 
@@ -96,14 +92,24 @@ const UserBookings = () => {
                                             </div>
                                         </div>
                                         
-                                        <div className="mt-3 mt-md-0">
+                                        <div className="mt-3 mt-md-0 d-flex gap-2 align-items-center">
                                             {isActive ? (
-                                                <button 
-                                                    className="btn btn-outline-danger btn-sm fw-bold px-3"
-                                                    onClick={() => handleCancel(bId)}
-                                                >
-                                                    <i className="bi bi-x-circle me-1"></i>Lemondás
-                                                </button>
+                                                <>
+                                                    {/* ÚJ: Értékelés gomb */}
+                                                    <Link 
+                                                        to={`/add-review/${b.provider_id}/${b.service_id}`}
+                                                        className="btn btn-warning btn-sm fw-bold px-3 shadow-sm"
+                                                    >
+                                                        <i className="bi bi-star-fill me-1"></i>Értékelés
+                                                    </Link>
+
+                                                    <button 
+                                                        className="btn btn-outline-danger btn-sm fw-bold px-3"
+                                                        onClick={() => handleCancel(bId)}
+                                                    >
+                                                        <i className="bi bi-x-circle me-1"></i>Lemondás
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <span className="text-danger small fw-bold italic text-uppercase">
                                                     Törölt foglalás

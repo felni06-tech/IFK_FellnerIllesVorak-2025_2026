@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import ProviderDashboard from './pages/ProviderDashboard';
 import AppointmentBooking from './pages/AppointmentBooking';
 import UserBookings from './pages/UserBookings';
+import ReviewForm from './pages/ReviewForm';
 import './App.css';
 
 function App() {
@@ -15,13 +16,13 @@ function App() {
   const savedUser = isLoggedIn ? JSON.parse(localStorage.getItem('user')) : null;
   const savedAdmin = isLoggedIn ? JSON.parse(localStorage.getItem('admin')) : null;
 
-  const user = savedUser || savedAdmin
+  const user = savedUser || savedAdmin;
 
   const isProvider = user?.isProvider === true;
   const isAdmin = isLoggedIn && localStorage.getItem('isAdmin') === 'true';
 
-  // Sima felhasználó (nem admin és nem szolgáltató)
-  const isCustomer = isLoggedIn && !isProvider && !isAdmin;
+  // Meghatározzuk, ki NEM személyzet (tehát ki írhat review-t)
+  const isNotStaff = !isProvider && !isAdmin;
 
   const handleLogout = () => {
     localStorage.clear();
@@ -33,17 +34,15 @@ function App() {
       <nav className="navbar navbar-expand navbar-dark bg-dark px-3 shadow fixed-top">
         <div className="container-fluid">
           
-          {/* BAL OLDAL */}
           <div className="nav-group">
             <Link className="nav-btn" style={{borderColor: '#0dcaf0'}} to="/">🏠 Főoldal</Link>
             
-            {/* Időpontfoglalás: CSAK bejelentkezett VENDÉG látja (Admin és Provider NEM) */}
-            {isCustomer && (
+            {/* Időpontfoglalás elérése (csak ha nem személyzet) */}
+            {isNotStaff && (
               <Link className="nav-link nav-btn" to="/appointments">Időpontfoglalás</Link>
             )}
 
-            {/* Szerepkör alapú gombok */}
-            {isCustomer && (
+            {isNotStaff && isLoggedIn && (
               <Link className="nav-btn" style={{color: '#ffc107', borderColor: '#ffc107'}} to="/my-bookings">
                 📅 Foglalásaim
               </Link>
@@ -62,7 +61,6 @@ function App() {
             )}
           </div>
 
-          {/* JOBB OLDAL */}
           <div className="nav-group">
             {!isLoggedIn ? (
               <>
@@ -85,11 +83,20 @@ function App() {
 
       <div className="content-area container mt-4">
         <Routes>
-          <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} isProvider={isProvider} user={user} isCustomer={isCustomer} />} />
+          <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} isProvider={isProvider} user={user} isNotStaff={isNotStaff} />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/appointments" element={isCustomer ? <AppointmentBooking /> : <Navigate to="/" />} />
-          <Route path="/my-bookings" element={isCustomer ? <UserBookings /> : <Navigate to="/" />} />
+          
+          {/* Védelem: Ha admin vagy provider próbálna ide menni, visszadobjuk a főoldalra */}
+          <Route path="/appointments" element={isNotStaff ? <AppointmentBooking /> : <Navigate to="/" />} />
+          <Route path="/my-bookings" element={isNotStaff && isLoggedIn ? <UserBookings /> : <Navigate to="/" />} />
+          
+          {/* Értékelő form: Csak ha NEM admin és NEM provider */}
+          <Route 
+            path="/add-review/:providerId/:serviceId" 
+            element={isNotStaff ? <ReviewForm /> : <Navigate to="/" />} 
+          />
+
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={isAdmin ? <AdminDashboard /> : <Navigate to="/admin" />} />
           <Route path="/provider/dashboard" element={(isLoggedIn && isProvider) ? <ProviderDashboard /> : <Navigate to="/login" />} />
@@ -100,7 +107,7 @@ function App() {
   );
 }
 
-const Home = ({ isLoggedIn, isAdmin, isProvider, user, isCustomer }) => (
+const Home = ({ isLoggedIn, isAdmin, isProvider, user, isNotStaff }) => (
   <div className="text-center py-5 mt-5 glass-panel shadow-lg">
     <h1 className="display-4 fw-bold">Időpontfoglaló</h1>
     {isLoggedIn ? (
@@ -108,18 +115,16 @@ const Home = ({ isLoggedIn, isAdmin, isProvider, user, isCustomer }) => (
         <p className="lead">Szia, <strong>{user?.name}</strong>! Örülünk, hogy újra itt vagy.</p>
         
         <div className="d-flex justify-content-center gap-3 mt-4">
-          {/* Admin gombja */}
           {isAdmin && (
             <Link to="/admin/dashboard" className="btn btn-danger btn-lg px-4 shadow">Irány az Admin Panel</Link>
           )}
 
-          {/* Szolgáltató gombja */}
           {isProvider && (
             <Link to="/provider/dashboard" className="btn btn-info btn-lg px-4 shadow text-white">Irány a vezérlőpultom</Link>
           )}
 
-          {/* Vendég gombjai (Admin nem látja) */}
-          {isCustomer && (
+          {/* Vendég/User gombok (Admin és Provider nem látja) */}
+          {isNotStaff && (
             <>
               <Link to="/appointments" className="btn btn-primary btn-lg px-4 shadow">Időpontot keresek</Link>
               <Link to="/my-bookings" className="btn btn-outline-dark btn-lg px-4">Foglalásaim kezelése</Link>
