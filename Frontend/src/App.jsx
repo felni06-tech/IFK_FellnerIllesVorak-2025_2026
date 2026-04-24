@@ -38,14 +38,14 @@
             <div className="nav-group">
               <Link className="navbar-brand p-0 m-0 d-flex align-items-center" to="/">
                 <img 
-                  src={logo}  /* Ide írd a logód elérési útját */
+                  src={logo} 
                   alt="Logo" 
                   className="navbar-logo"
                 />
               </Link>
               
-              {/* Időpontfoglalás elérése (csak ha nem személyzet) */}
-              {isNotStaff && (
+              {/* Időpontfoglalás elérése (Csak ha be van jelentkezve ÉS nem személyzet) */}
+              {isLoggedIn && isNotStaff && (
                 <Link className="nav-link nav-btn" to="/appointments">Időpontfoglalás</Link>
               )}
 
@@ -57,7 +57,7 @@
 
               {isProvider && (
                 <Link className="nav-btn" style={{color: '#0dcaf0', borderColor: '#0dcaf0'}} to="/provider/dashboard">
-                  💼 Saját üzletem
+                  💼 Saját profil
                 </Link>
               )}
 
@@ -114,69 +114,77 @@
     );
   }
 
-  const Home = ({ isLoggedIn, isAdmin, isProvider, user, isNotStaff }) => (
-    <div className="container content-area">
-      <div className="row justify-content-center">
-        {/* A glass-panel osztály már a modern CSS-ből jön */}
-        <div className="col-md-10 col-lg-8 text-center glass-panel shadow-lg mt-5">
-          
-          <h1 className="display-2 mb-4 fw-bold animate-fade-in">
-            <span style={{ color: 'var(--accent-blue)' }}>Időpont</span>
-            <span style={{ color: 'var(--white)' }}>foglaló</span>
-          </h1>
-          
-          {isLoggedIn ? (
-            <div className="mt-4">
-              <p className="lead fs-3 mb-2">
-                Üdvözlünk újra, <span style={{ color: '#214f7e', fontWeight: '700' }}>{user?.name}</span>! 👋
-              </p>
-              <p className="text-muted mb-5">Válassz az alábbi műveletek közül az induláshoz:</p>
-              
-              {/* A nav-group-hoz hasonló gap-alapú elrendezés a gomboknak */}
-              <div className="d-flex justify-content-center gap-3 flex-wrap">
-                {isAdmin && (
-                  <Link to="/admin/dashboard" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
-                    🛡️ Rendszerfelügyelet
-                  </Link>
-                )}
-
-                {isProvider && (
-                  <Link to="/provider/dashboard" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
-                    💼 Üzletvezetés
-                  </Link>
-                )}
-
-                {isNotStaff && (
-                  <>
-                    <Link to="/appointments" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
-                      🚀 Új időpontot foglalok
-                    </Link>
-                    <Link to="/my-bookings" className="nav-btn px-5 py-3 fs-5">
-                      📅 Foglalásaim
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="py-5 mt-2">
-              <p className="lead mb-5 text-light fs-4 mx-auto" style={{ maxWidth: '600px', opacity: 0.9 }}>
-                A legegyszerűbb és leggyorsabb út a szolgáltatásokhoz. 
-                Foglalj időpontot pár kattintással, bárhol, bármikor.
-              </p>
-              <div className="d-flex justify-content-center gap-4 flex-wrap">
-                <Link to="/login" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
-                  Bejelentkezés
+const Home = ({ isLoggedIn, isAdmin, isProvider, user, isNotStaff }) => (
+  <div className="container content-area">
+    <div className="row justify-content-center">
+      <div className="col-md-10 col-lg-8 glass-panel shadow-lg mt-5 text-center">
+        
+        <h1 className="display-2 mb-4 fw-bold animate-fade-in">
+          <span style={{ color: 'var(--accent-blue)' }}>Időpont</span>
+          <span style={{ color: 'var(--white)' }}>foglaló</span>
+        </h1>
+        
+        {isLoggedIn ? (
+          <div className="mt-4">
+            <p className="lead fs-3 mb-2" style={{ color: '#000000' }}>
+              Üdvözlünk újra, <span style={{ fontWeight: '700' }}>{user?.name}</span>! 👋
+            </p>
+            <p className="text-muted mb-5">Válassz az alábbi műveletek közül az induláshoz:</p>
+            
+            <div className="d-flex justify-content-center gap-3 flex-wrap">
+              {isAdmin && (
+                <Link to="/admin/dashboard" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                  🛡️ Rendszerfelügyelet
                 </Link>
-                <Link to="/register" className="nav-btn px-5 py-3 fs-5">
-                  Regisztráció
+              )}
+
+              {isProvider && (
+                <Link to="/provider/dashboard" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                  💼 Üzletvezetés
                 </Link>
-              </div>
+              )}
+
+              {isNotStaff && (
+                <>
+                  <Link to="/appointments" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                    🚀 Új időpontot foglalok
+                  </Link>
+                  <Link to="/my-bookings" className="nav-btn px-5 py-3 fs-5">
+                    📅 Foglalásaim
+                  </Link>
+                </>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="py-5 mt-2 d-flex flex-column align-items-center">
+            <p 
+              className="lead mb-5 text-light fs-4" 
+              style={{ 
+                maxWidth: '600px', 
+                opacity: 0.9, 
+                textAlign: 'center',
+                marginLeft: 'auto',
+                marginRight: 'auto'
+              }}
+            >
+              A legegyszerűbb és leggyorsabb út a szolgáltatásokhoz. 
+              Foglalj időpontot pár kattintással, bárhol, bármikor.
+            </p>
+            
+            <div className="d-flex justify-content-center gap-4 flex-wrap w-100">
+              <Link to="/login" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
+                Bejelentkezés
+              </Link>
+              <Link to="/register" className="nav-btn px-5 py-3 fs-5">
+                Regisztráció
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  );
+  </div>
+);
 
   export default App;
