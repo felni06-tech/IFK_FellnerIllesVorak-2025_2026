@@ -6,6 +6,7 @@
   import AdminDashboard from './pages/AdminDashboard';
   import ProviderDashboard from './pages/ProviderDashboard';
   import AppointmentBooking from './pages/AppointmentBooking';
+  import BookingPage from './pages/BookingPage';
   import UserBookings from './pages/UserBookings';
   import ReviewForm from './pages/ReviewForm';
   import './App.css';
@@ -97,7 +98,8 @@
             {/* Védelem: Ha admin vagy provider próbálna ide menni, visszadobjuk a főoldalra */}
             <Route path="/appointments" element={isNotStaff ? <AppointmentBooking /> : <Navigate to="/" />} />
             <Route path="/my-bookings" element={isNotStaff && isLoggedIn ? <UserBookings /> : <Navigate to="/" />} />
-            
+            <Route path="/book/:providerId" element={<BookingPage />} />
+
             {/* Értékelő form: Csak ha NEM admin és NEM provider */}
             <Route 
               path="/add-review/:providerId/:serviceId" 
