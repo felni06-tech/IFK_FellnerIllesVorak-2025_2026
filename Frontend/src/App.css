@@ -118,6 +118,7 @@ body {
     color: var(--deep-bg) !important; /* Alapból sötét szöveg a fehér háttéren */
     border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
 }
 
 /* JAVÍTÁS: Kiemelt gomb hover állapota */
@@ -127,6 +128,10 @@ body {
     color: var(--white) !important;           /* Így biztosan látszódni fog a text */
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(0, 148, 255, 0.4);
+}
+
+.nav-btn-highlight:active {
+  transform: scale(0.95);
 }
 
 /* Felhasználó Infó */
@@ -194,4 +199,16 @@ body {
 .text-muted {
     color: var(--accent-blue) !important;
     opacity: 0.9;
+}
+
+/* Input szöveg színének javítása a glassmorphism mezőkben */
+input.nav-btn::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+input.nav-btn:focus {
+    background: rgba(255, 255, 255, 0.2) !important;
+    outline: none;
+    border-color: var(--white);
+    color: white;
 }
