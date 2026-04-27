@@ -33,19 +33,15 @@
 
     return (
       <Router>
-        <nav className="navbar navbar-expand navbar-dark px-3 shadow fixed-top">
-          <div className="container-fluid">
+        <nav className="navbar navbar-expand-md navbar-dark px-3 shadow fixed-top">
+          <div className="container-fluid d-flex flex-wrap justify-content-between align-items-center">
             
-            <div className="nav-group">
+            {/* BAL OLDAL - Ez marad balra */}
+            <div className="nav-group d-flex align-items-center gap-2">
               <Link className="navbar-brand p-0 m-0 d-flex align-items-center" to="/">
-                <img 
-                  src={logo} 
-                  alt="Logo" 
-                  className="navbar-logo"
-                />
+                <img src={logo} alt="Logo" className="navbar-logo" />
               </Link>
               
-              {/* Időpontfoglalás elérése (Csak ha be van jelentkezve ÉS nem személyzet) */}
               {isLoggedIn && isNotStaff && (
                 <Link className="nav-link nav-btn" to="/appointments">Időpontfoglalás</Link>
               )}
@@ -58,18 +54,19 @@
 
               {isProvider && (
                 <Link className="nav-btn" style={{color: '#0dcaf0', borderColor: '#0dcaf0'}} to="/provider/dashboard">
-                  💼 Saját profil
+                  💼 Profil
                 </Link>
               )}
 
               {isAdmin && (
                 <Link className="nav-btn" style={{color: '#ff4d4d', borderColor: '#ff4d4d'}} to="/admin/dashboard">
-                  🛡️ Admin Panel
+                  🛡️ Admin
                 </Link>
               )}
             </div>
 
-            <div className="nav-group">
+            {/* JOBB OLDAL - Ez asztalin jobbra tapad, mobilton pedig aláugrik és szintén balra rendeződik */}
+            <div className="nav-group d-flex align-items-center gap-2 mt-2 mt-md-0">
               {!isLoggedIn ? (
                 <>
                   <Link className="nav-btn" to="/login">Bejelentkezés</Link>
@@ -77,7 +74,7 @@
                 </>
               ) : (
                 <>
-                  <span className="user-info-text d-none d-md-inline">
+                  <span className="user-info-text d-none d-md-inline text-white">
                     <strong>{user?.name}</strong>
                   </span>
                   <button className="logout-btn" onClick={handleLogout}>
@@ -86,6 +83,7 @@
                 </>
               )}
             </div>
+
           </div>
         </nav>
 
