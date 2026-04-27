@@ -1,22 +1,29 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 const ReviewForm = () => {
-    // Az URL-ből vesszük ki az ID-kat: /add-review/12/5
     const { providerId, serviceId } = useParams(); 
     const navigate = useNavigate();
+    const textAreaRef = useRef(null); // Ref a textarea eléréséhez
 
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Dinamikus magasság állítás
+    const handleTextChange = (e) => {
+        setComment(e.target.value);
+        
+        // Visszaállítjuk az alapmagasságot, majd beállítjuk a görgetési magasságra (scrollHeight)
+        const textarea = e.target;
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Ellenőrizzük konzolon, hogy megvannak-e az ID-k
-        console.log("Küldés:", { providerId, serviceId, rating, comment });
-
         if (!providerId || !serviceId) {
             alert("Hiányzó szolgáltató vagy szolgáltatás azonosító!");
             return;
@@ -24,10 +31,9 @@ const ReviewForm = () => {
 
         setLoading(true);
         try {
-            // FONTOS: A neveket pontosan úgy kell küldeni, ahogy a backend várja (camelCase)
             await api.post('/reviews/add', {
-                providerId: Number(providerId), // Számmá alakítás
-                serviceId: Number(serviceId),   // Számmá alakítás
+                providerId: Number(providerId),
+                serviceId: Number(serviceId),
                 rating: Number(rating),
                 comment: comment
             });
@@ -43,41 +49,110 @@ const ReviewForm = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <div className="row justify-content-center">
-                <div className="col-md-6 card p-4 shadow border-primary bg-white">
-                    <h3 className="text-center mb-4 text-primary">Szolgáltatás értékelése</h3>
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label className="form-label fw-bold">Hány csillagot adsz?</label>
-                            <select 
-                                className="form-select border-primary" 
-                                value={rating} 
-                                onChange={e => setRating(e.target.value)}
-                            >
-                                <option value="5">⭐⭐⭐⭐⭐ (5 - Kiváló)</option>
-                                <option value="4">⭐⭐⭐⭐ (4 - Jó)</option>
-                                <option value="3">⭐⭐⭐ (3 - Átlagos)</option>
-                                <option value="2">⭐⭐ (2 - Gyenge)</option>
-                                <option value="1">⭐ (1 - Elfogadhatatlan)</option>
-                            </select>
-                        </div>
-                        <div className="mb-3">
-                            <label className="form-label fw-bold">Véleményed:</label>
-                            <textarea 
-                                className="form-control border-primary" 
-                                rows="4" 
-                                value={comment} 
-                                onChange={e => setComment(e.target.value)}
-                                placeholder="Opcionális: Írd le a tapasztalataidat..."
-                            ></textarea>
-                        </div>
-                        <button type="submit" className="btn btn-primary w-100 shadow fw-bold" disabled={loading}>
-                            {loading ? 'Küldés...' : 'Értékelés beküldése'}
+        <div className="container d-flex justify-content-center align-items-center py-5" style={{ minHeight: '80vh' }}>
+            <div className="col-md-8 col-lg-5 glass-panel shadow-lg animate-fade-in p-5">
+                
+                <div className="text-center mb-5">
+                    <h2 className="display-6 fw-bold text-white">
+                        Értékelés <span style={{ color: 'var(--accent-blue)' }}>küldése</span>
+                    </h2>
+                    <p className="text-muted small">Oszd meg velünk a tapasztalataidat!</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="d-flex flex-column gap-4">
+                    
+                    <div className="form-group-custom">
+                        <label className="mb-2 fw-bold opacity-75 small text-light">Hány csillagot adsz?</label>
+                        <select 
+                            className="nav-btn w-100 py-3 px-4" 
+                            style={{ 
+                                background: 'rgba(255,255,255,0.05)', 
+                                border: '1px solid var(--glass-border)',
+                                cursor: 'pointer'
+                            }}
+                            value={rating} 
+                            onChange={e => setRating(e.target.value)}
+                        >
+                            <option value="5" className="bg-dark">⭐⭐⭐⭐⭐ (5 - Kiváló)</option>
+                            <option value="4" className="bg-dark">⭐⭐⭐⭐ (4 - Jó)</option>
+                            <option value="3" className="bg-dark">⭐⭐⭐ (3 - Átlagos)</option>
+                            <option value="2" className="bg-dark">⭐⭐ (2 - Gyenge)</option>
+                            <option value="1" className="bg-dark">⭐ (1 - Elfogadhatatlan)</option>
+                        </select>
+                    </div>
+
+                    <div className="form-group-custom">
+                        <label className="mb-2 fw-bold opacity-75 small text-light">Véleményed</label>
+                        <textarea 
+                            ref={textAreaRef}
+                            className="nav-btn w-100 py-3 px-4 auto-expand" 
+                            rows="3" 
+                            style={{ 
+                                background: 'rgba(255,255,255,0.05)', 
+                                border: '1px solid var(--glass-border)',
+                                resize: 'none',
+                                borderRadius: '20px',
+                                overflow: 'hidden', // Itt tiltjuk le a scrollbart
+                                minHeight: '120px',
+                                transition: 'height 0.2s ease-out'
+                            }}
+                            value={comment} 
+                            onChange={handleTextChange}
+                            placeholder="Írd le pár szóban, hogy elégedett voltál-e..."
+                        ></textarea>
+                    </div>
+
+                    <div className="text-center mt-3">
+                        <button 
+                            type="submit" 
+                            className="nav-btn nav-btn-highlight w-100 py-3 fs-5 shadow-sm"
+                            style={{ marginTop: '20px' }}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <span><span className="spinner-border spinner-border-sm me-2"></span>Küldés...</span>
+                            ) : (
+                                'Értékelés beküldése'
+                            )}
                         </button>
-                    </form>
+                    </div>
+                </form>
+                
+                <div className="mt-4 text-center">
+                    <button 
+                        onClick={() => navigate('/my-bookings')} 
+                        className="btn btn-link text-muted text-decoration-none small opacity-50 hover-opacity-100"
+                    >
+                        Inkább mégse értékelek
+                    </button>
                 </div>
             </div>
+
+            <style>{`
+                .glass-panel {
+                    background: var(--glass-bg);
+                    backdrop-filter: blur(15px);
+                    border: 1px solid var(--glass-border);
+                    border-radius: 30px;
+                }
+
+                .hover-opacity-100:hover {
+                    opacity: 1 !important;
+                    color: white !important;
+                }
+
+                select option {
+                    background-color: #1a1a1a;
+                    color: white;
+                }
+
+                /* Finom átmenet a magasság változáshoz */
+                .auto-expand {
+                    display: block;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+            `}</style>
         </div>
     );
 };
