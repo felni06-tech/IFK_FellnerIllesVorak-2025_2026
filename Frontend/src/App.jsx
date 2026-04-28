@@ -129,7 +129,7 @@ const Home = ({ isLoggedIn, isAdmin, isProvider, user, isNotStaff }) => (
             <p className="lead fs-3 mb-2" style={{ color: '#000000' }}>
               Üdvözlünk újra, <span style={{ fontWeight: '700' }}>{user?.name}</span>! 👋
             </p>
-            <p className="text-muted mb-5">Válassz az alábbi műveletek közül az induláshoz:</p>
+            <p className="text-muted mb-5">Válassz az alábbi műveletek közül:</p>
             
             <div className="d-flex justify-content-center gap-3 flex-wrap">
               {isAdmin && (
@@ -140,7 +140,7 @@ const Home = ({ isLoggedIn, isAdmin, isProvider, user, isNotStaff }) => (
 
               {isProvider && (
                 <Link to="/provider/dashboard" className="nav-btn nav-btn-highlight px-5 py-3 fs-5">
-                  💼 Üzletvezetés
+                  💼 Profilkezelés
                 </Link>
               )}
 

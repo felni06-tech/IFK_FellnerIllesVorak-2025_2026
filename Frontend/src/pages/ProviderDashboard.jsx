@@ -209,7 +209,8 @@ const ProviderDashboard = () => {
                             </span>
                         </div>
 
-                        <div className="booking-scroll-container">
+                        {/* Eltávolítottuk a scroll-container osztályt, vagy módosítottuk a viselkedését */}
+                        <div className="booking-dynamic-container">
                             {bookings.length > 0 ? (
                                 <div className="d-flex flex-column gap-3">
                                     {[...bookings]
@@ -222,7 +223,6 @@ const ProviderDashboard = () => {
 
                                             return (
                                                 <div key={i} className="provider-booking-card">
-                                                    {/* Kék dátum poszter */}
                                                     <div className="date-poster-blue">
                                                         <span className="year">{year}</span>
                                                         <span className="day">{day}</span>
@@ -244,7 +244,6 @@ const ProviderDashboard = () => {
                                                             </span>
                                                         </div>
                                                     </div>
-
                                                     <div className="accent-bar-blue"></div>
                                                 </div>
                                             );
@@ -259,10 +258,11 @@ const ProviderDashboard = () => {
                         </div>
 
                         <style>{`
-                            .booking-scroll-container {
-                                max-height: 500px;
-                                overflow-y: auto;
-                                padding-right: 10px;
+                            /* A fix magasság és görgetés eltávolítva */
+                            .booking-dynamic-container {
+                                width: 100%;
+                                height: auto;
+                                overflow: visible; /* Biztosítjuk, hogy ne legyen görgetősáv */
                             }
 
                             .provider-booking-card {
@@ -273,6 +273,7 @@ const ProviderDashboard = () => {
                                 overflow: hidden;
                                 transition: all 0.3s ease;
                                 height: 110px;
+                                flex-shrink: 0; /* Megakadályozzuk, hogy összenyomódjanak */
                             }
 
                             .provider-booking-card:hover {
@@ -328,7 +329,7 @@ const ProviderDashboard = () => {
 
                             .info-tag {
                                 font-size: 0.75rem;
-                                color: #aaa;
+                                color: #ffffff;
                                 background: rgba(255,255,255,0.05);
                                 padding: 2px 8px;
                                 border-radius: 5px;
@@ -337,7 +338,7 @@ const ProviderDashboard = () => {
                             .info-tag.highlighted {
                                 color: #fff;
                                 font-weight: bold;
-                                background: rgba(0, 212, 255, 0.1); /* Világosabb kék háttér az árnak */
+                                background: rgba(0, 212, 255, 0.1);
                             }
 
                             .accent-bar-blue {
@@ -346,14 +347,8 @@ const ProviderDashboard = () => {
                                 opacity: 0.6;
                             }
 
-                            .booking-scroll-container::-webkit-scrollbar { width: 5px; }
-                            .booking-scroll-container::-webkit-scrollbar-thumb { 
-                                background: rgba(255, 255, 255, 0.1); 
-                                border-radius: 10px; 
-                            }
-
                             @media (max-width: 576px) {
-                                .provider-booking-card { height: auto; }
+                                .provider-booking-card { height: auto; min-height: 100px; }
                                 .date-poster-blue { min-width: 75px; padding: 10px; }
                             }
                         `}</style>
