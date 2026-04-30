@@ -1,4 +1,5 @@
   import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+  import { jwtDecode } from 'jwt-decode';
   import logo from './assets/logo.png'
   import Login from './pages/Login';
   import Register from './pages/Register';
@@ -14,17 +15,27 @@
   function App() {
     const token = localStorage.getItem('token');
     const isLoggedIn = !!token;
+
+    let decodedToken = null;
+    if (isLoggedIn) {
+      try {
+          decodedToken = jwtDecode(token);
+      } catch (err) {
+          console.error("Érvénytelen token");
+          localStorage.clear(); // Ha rossz a token, töröljük
+      }
+    }
     
-    const savedUser = isLoggedIn ? JSON.parse(localStorage.getItem('user')) : null;
-    const savedAdmin = isLoggedIn ? JSON.parse(localStorage.getItem('admin')) : null;
+    // --- Jogosultságok meghatározása a Token alapján ---
+    // A szerepköröket (role) a backend írta bele a jwt.sign-nál
+    const isAdmin = decodedToken?.role === 'admin';
+    const isProvider = decodedToken?.role === 'provider';
 
-    const user = savedUser || savedAdmin;
-
-    const isProvider = user?.isProvider === true;
-    const isAdmin = isLoggedIn && localStorage.getItem('isAdmin') === 'true';
 
     // Meghatározzuk, ki NEM személyzet (tehát ki írhat review-t)
-    const isNotStaff = !isProvider && !isAdmin;
+    const isNotStaff = isLoggedIn && !isProvider && !isAdmin;
+
+    const userName = decodedToken?.name || 'Vendég';
 
     const handleLogout = () => {
       localStorage.clear();
@@ -75,7 +86,7 @@
               ) : (
                 <>
                   <span className="user-info-text d-none d-md-inline text-white">
-                    <strong>{user?.name}</strong>
+                    <strong>{userName}</strong>
                   </span>
                   <button className="logout-btn" onClick={handleLogout}>
                     Kijelentkezés
@@ -89,7 +100,7 @@
 
         <div className="content-area container mt-4">
           <Routes>
-            <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} isProvider={isProvider} user={user} isNotStaff={isNotStaff} />} />
+            <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} isProvider={isProvider} user={decodedToken} isNotStaff={isNotStaff} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             

@@ -107,10 +107,13 @@ export const login = async (req, res) => {
             serviceId = serviceData && serviceData.length > 0 ? serviceData[0].service_id : null
         }
 
+        const role = user.provider_id != null ? 'customer' : 'provider'
+
         const token = jwt.sign(
             {
                 id: user.id,
                 name: user.name,
+                role: role,
                 provider_id: user.provider_id,
                 service_id: serviceId
             },
@@ -118,13 +121,14 @@ export const login = async (req, res) => {
            { expiresIn: '24h' } 
         )
 
+
         res.json(
         {
             token,
             user: {
                 id: user.id,
                 name: user.name,
-                isProvider: user.provider_id != null,
+                role: role,
                 providerId: user.provider_id,
                 serviceId
             }
