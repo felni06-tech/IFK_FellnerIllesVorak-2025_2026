@@ -17,7 +17,14 @@ const Login = () => {
             localStorage.setItem('user', JSON.stringify(res.data.user)); 
             window.location.href = '/'; 
         } catch (err) {
-            alert('Hibás e-mail vagy jelszó!');
+            // Ellenőrizzük, hogy van-e válasz a szervertől (err.response)
+            if (err.response && err.response.data && err.response.data.message) {
+                // Azt az üzenetet írjuk ki, amit a backend küldött (pl. "Fiókod jóváhagyásra vár.")
+                alert(err.response.data.message);
+            } else {
+                // Ha valami más hiba van (pl. nem érhető el a szerver)
+                alert('Hiba történt a bejelentkezés során!');
+            }
         } finally {
             setLoading(false);
         }
